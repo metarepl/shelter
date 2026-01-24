@@ -31,31 +31,41 @@
    :pwd
    :ls
    :cd
-   :cat
-   :grep
    :which
-   :echo
-   :find-dir
-   :on-start
-   :on-project
+   :cat
+   :head
+   :tail
    :touch ; &&& add to docs
-   :move-file ; &&& add to docs
-   :*click-initialized*
-   :*click-cwd*
+   ;; :move-file ; &&& add to docs
+   ;; :rename-file
+   :mkdir
+   :rmdir
+   ;; :grep
+   ;; :echo
+   ;; :find-dir
+   ;; :on-project
+   :*init-dir*
+   :*cwd*
+   :*history*
    ))
 
 (in-package :click) ;; Also enter this in the REPL!
 
+;;;; ==================================== setup
+
+;; (series::install) ; the secret function
+(assert (not (member :X *features*)) () "X cannot be in *features*, because #+X(print \"is used to mask\")") ; #+X(print "masked form")
+
 ;;;; ==================================== initialization
 
-(defvar *click-initialized*
+(defvar *init-dir*
   "Set to the location from which click first invoked")
-(defparameter *click-cwd*
+(defparameter *cwd*
   "click maintains its own sense of cwd to allow default-pathname-defaults and uiop:getcwd to be unaffected")
-(defparameter *click-history* '())
+(defparameter *history* '())
 
 (defun on-start ()
-  "&&& everything that should happen every startup"
+  "do everything that should happen every startup"
   ;; (quicklisp:update-dist "quicklisp")
   ;; (quicklisp:update-dist "ultralisp")
   ;; (quicklisp:update-all-dists :prompt nil)
@@ -64,111 +74,110 @@
   ;; &&& clerk jobs
 
   ;; locations complementary to  *default-pathname-defaults*
-  (setf *click-initialized* (uiop:getcwd))
-  (setf *click-cwd* (uiop:getcwd))
-  (push *click-cwd* *click-history*)
-  )
+  (setf *init-dir* (uiop:getcwd))
+  (setf *cwd* (uiop:getcwd))
+  (push *cwd* *history*))
 
 (on-start)
 
 (defun on-project ()
   "&&& everything that should happen once the user has navigated to target location"
   ;; additional clerk jobs
-  (setf *click-cwd* (uiop:getcwd)))
+  (setf *cwd* (uiop:getcwd)))
 
 ;;;; ==================================== file system utilities
-(defun directory-depth (&optional (depth 1) (paths '(#P"/")))
-  "Takes a list of paths or a path as search roots, and returns a deduplicated list of paths of all dirs to depth below the roots that exist"
-;; (directory-depth 1 `(,*default-pathname-defaults*))
-;; (directory-depth 1 `(,(user-homedir-pathname)))
-;; (directory-depth 1 '("/home/user/" "barfoo"))
-;; (directory-depth 1 '("/home/user/"))
-;; (directory-depth 0 '("/home/user/"))
-;; (directory-depth 0 '("/home/user"))
-                                        ; make real path, check it exists
-                                        ; drop dups
-  (let ((good-paths (remove-duplicates (remove-if #'null (mapcar #'uiop:directory-exists-p paths)))))
-   (if (<= depth 0) ; base case 0 will go no deeper, returns paths back up to recursive call
-      good-paths; return just paths
-                                        ; nested list of subdirs
-                                        ; flatten list
-                                        ; drop dups
-                                        ; assign
-      (let ((subdirectories (remove-duplicates (alexandria:flatten (mapcar #'uiop:subdirectories good-paths))
-                                               :test #'equal)))
-                                        ; recursive call into subdirectories
-                                        ; drop dups
-                                        ; add paths of this call to recursive result
-                                        ; drop dups
-                                        ; return
-        (remove-duplicates (append good-paths (remove-duplicates (directory-depth (1- depth) subdirectories)
-                                         :test #'equal)))))))
+;; (defun directory-depth (&optional (depth 1) (paths '(#P"/")))
+;;   "Takes a list of paths or a path as search roots, and returns a deduplicated list of paths of all dirs to depth below the roots that exist"
+;; ;; (directory-depth 1 `(,*default-pathname-defaults*))
+;; ;; (directory-depth 1 `(,(user-homedir-pathname)))
+;; ;; (directory-depth 1 '("/home/user/" "barfoo"))
+;; ;; (directory-depth 1 '("/home/user/"))
+;; ;; (directory-depth 0 '("/home/user/"))
+;; ;; (directory-depth 0 '("/home/user"))
+;;                                         ; make real path, check it exists
+;;                                         ; drop dups
+;;   (let ((good-paths (remove-duplicates (remove-if #'null (mapcar #'uiop:directory-exists-p paths)))))
+;;    (if (<= depth 0) ; base case 0 will go no deeper, returns paths back up to recursive call
+;;       good-paths; return just paths
+;;                                         ; nested list of subdirs
+;;                                         ; flatten list
+;;                                         ; drop dups
+;;                                         ; assign
+;;       (let ((subdirectories (remove-duplicates (alexandria:flatten (mapcar #'uiop:subdirectories good-paths))
+;;                                                :test #'equal)))
+;;                                         ; recursive call into subdirectories
+;;                                         ; drop dups
+;;                                         ; add paths of this call to recursive result
+;;                                         ; drop dups
+;;                                         ; return
+;;         (remove-duplicates (append good-paths (remove-duplicates (directory-depth (1- depth) subdirectories)
+;;                                          :test #'equal)))))))
 
-(defun find-dir (&key
-                   (root '(#P"/"))
-                   (depth 0)
-                   (keep "*")
-                   (drop nil drop-supplied-p)
-                   (report nil)
-                   (n-test 1 n-test-supplied-p))
-  "takes a list of paths and fuzzy filters directories, if depth is set it descends into directory tree,can be sequentially applied to its own output.
+;; (defun find-dir (&key
+;;                    (root '(#P"/"))
+;;                    (depth 0)
+;;                    (keep "*")
+;;                    (drop nil drop-supplied-p)
+;;                    (report nil)
+;;                    (n-test 1 n-test-supplied-p))
+;;   "takes a list of paths and fuzzy filters directories, if depth is set it descends into directory tree,can be sequentially applied to its own output.
 
-  arg : default action : description
-  root : '(#P\"/\") : a list with paths or a path in #P or string form
-  depth : 0 : an integer for retrieval depth below roots, default 0 goes no deeper for filtering root list
-  keep : all : space delimited words to separately(additive to set) fuzzy filter in
-  drop : none : space delimited words to separately(additive to set) fuzzy filter out, applied after keep
-  report : none : set true for reporting on processing, big ass reports if depth is large
-  n-test : off : integer for required num of paths in output list, error and report if not "
-  ;; (find-dir :keep "lib opt" :drop "etc lib gnu" :depth 2)
-  ;; (find-dir :report t :keep "lib opt" :drop "etc lib gnu" :depth 2)
-  ;; (find-dir :n-test 6 :depth 3 :keep "opt" :drop "gnu"  )
-  ;; (find-dir :drop "chrome" :root (find-dir :depth 2 :keep "opt" :drop "gnu"))
-  (flet ((find-sets (dirs str)
-           (let ((sets '())
-                 (set-list (str:split " " str)))
-             (dolist (s set-list)
-               (setf sets (append (fuzzy-match:fuzzy-match s dirs)
-                                  sets)))
-             sets)))
-    (let* ((dirs (directory-depth depth root))
-           (keeps (find-sets dirs keep))
-           (drops (if drop-supplied-p
-                      (find-sets keeps drop)
-                      '()))
-           (final (set-difference keeps drops)))
-      (labels ((show-dirs (title search-string dirs)
-                 (format t "~&~%~A ~A~%" title search-string)
-                 (dolist (d dirs)
-                   (format t "~A~%" d)))
-               (print-report ()
-                 (show-dirs "RECIEVED" "" root)
-                 (show-dirs "RETRIEVED" "" dirs)
-                 (show-dirs "KEEPS" keep keeps)
-                 (show-dirs "DROPS" drop drops)
-                 (show-dirs "FINAL" "" final)))
-        (when report (print-report))
-        (when n-test-supplied-p
-          (unless (= n-test (length final))
-            (print-report)
-            (error "In find-dir incorrect number of directories~%expected: ~D found: ~D~%" n-test (length keeps))))
-        ;;return
-        final))))
+;;   arg : default action : description
+;;   root : '(#P\"/\") : a list with paths or a path in #P or string form
+;;   depth : 0 : an integer for retrieval depth below roots, default 0 goes no deeper for filtering root list
+;;   keep : all : space delimited words to separately(additive to set) fuzzy filter in
+;;   drop : none : space delimited words to separately(additive to set) fuzzy filter out, applied after keep
+;;   report : none : set true for reporting on processing, big ass reports if depth is large
+;;   n-test : off : integer for required num of paths in output list, error and report if not "
+;;   ;; (find-dir :keep "lib opt" :drop "etc lib gnu" :depth 2)
+;;   ;; (find-dir :report t :keep "lib opt" :drop "etc lib gnu" :depth 2)
+;;   ;; (find-dir :n-test 6 :depth 3 :keep "opt" :drop "gnu"  )
+;;   ;; (find-dir :drop "chrome" :root (find-dir :depth 2 :keep "opt" :drop "gnu"))
+;;   (flet ((find-sets (dirs str)
+;;            (let ((sets '())
+;;                  (set-list (str:split " " str)))
+;;              (dolist (s set-list)
+;;                (setf sets (append (fuzzy-match:fuzzy-match s dirs)
+;;                                   sets)))
+;;              sets)))
+;;     (let* ((dirs (directory-depth depth root))
+;;            (keeps (find-sets dirs keep))
+;;            (drops (if drop-supplied-p
+;;                       (find-sets keeps drop)
+;;                       '()))
+;;            (final (set-difference keeps drops)))
+;;       (labels ((show-dirs (title search-string dirs)
+;;                  (format t "~&~%~A ~A~%" title search-string)
+;;                  (dolist (d dirs)
+;;                    (format t "~A~%" d)))
+;;                (print-report ()
+;;                  (show-dirs "RECIEVED" "" root)
+;;                  (show-dirs "RETRIEVED" "" dirs)
+;;                  (show-dirs "KEEPS" keep keeps)
+;;                  (show-dirs "DROPS" drop drops)
+;;                  (show-dirs "FINAL" "" final)))
+;;         (when report (print-report))
+;;         (when n-test-supplied-p
+;;           (unless (= n-test (length final))
+;;             (print-report)
+;;             (error "In find-dir incorrect number of directories~%expected: ~D found: ~D~%" n-test (length keeps))))
+;;         ;;return
+;;         final))))
 
 ;;;; ==================================== click utilities
 
-(defun help (type)
-  "TODO display a message that makes help and system info discoverable
-type lets you drill down to a specific help type
-eg system-apropos, describe"
-  (print "not implemented"))
+;; (defun help (type)
+;;   "display a message that makes help and system info discoverable
+;; type lets you drill down to a specific help type
+;; eg system-apropos, describe"
+;;   (print "&&& not implemented"))
 
-(defun p (str)
-  "TODO fast and simple printing utility
-takes a string like: The (quick) brown (fox)
-substitutes the inline parens to a format statement of the type specified
-evaluates the format statement"
-  (print "not implemeted"))
+;; (defun p (str)
+;;   "TODO fast and simple printing utility
+;; takes a string like: The (quick) brown (fox)
+;; substitutes the inline parens to a format statement of the type specified
+;; evaluates the format statement"
+;;   (print "&&& not implemeted"))
 
 ;; Commands are listed in priority order. The headings are moved down as work is completed
 
@@ -181,25 +190,25 @@ evaluates the format statement"
 
 (defun ls (&optional argstring)
   "List contents of pwd. returns dirs then files as CL pathnames. If an arg string is provided those will be passed to unix ls.
-Cannonical
+Common
 dirs: (uiop:subdirectories (uiop:getcwd))
 files: (uiop:directory-files (uiop:getcwd))"
   ;; (ls) => pathnames
   ;; (ls "-al") =>
   (if (null argstring)
       (append
-       (uiop:subdirectories (uiop:getcwd))
-       (uiop:directory-files (uiop:getcwd)))
-      ($cmd (format nil "ls ~A" argstring))))
+       (uiop:subdirectories *cwd*)
+       (uiop:directory-files *cwd*))
+      (cmd:$cmd (format nil "ls ~A ~A" argstring *cwd*))))
 
 (defun pwd ()
-  "Print state of working directories, returns *click-cwd*
-Commonly
+  "Print state of working directories, returns *cwd*
+Common
 (uiop:getcwd)"
-  (format t "~&*click-cwd*: ~A" *click-cwd*)
+  (format t "~&*cwd*: ~A" *cwd*)
   (format t "~&uiop:getcwd: ~A" (uiop:getcwd))
   (format t "~&*default-pathname-defaults*: ~A" *default-pathname-defaults*)
-  (values *click-cwd* (uiop:getcwd) *default-pathname-defaults*))
+  (values *cwd* (uiop:getcwd) *default-pathname-defaults*))
 
 ;;;; ==================================== bash tested
 ;; The command basically works as it should, if any functionality is missing it should be noted in docstring.
@@ -210,18 +219,18 @@ Commonly
   (let ((target-path (cond
                        ((null path) (user-homedir-pathname))
                        ((string= (namestring path) "..")
-                        (uiop:pathname-parent-directory-pathname *click-cwd*))
+                        (uiop:pathname-parent-directory-pathname *cwd*))
                        ((string= (namestring path) "~")(user-homedir-pathname))
                        (t path))))
     ;; test if target-path exists
     (assert (not (null (probe-file target-path))) (target-path)
             "path must exist. entry: ~A" path)
-    (push *click-cwd* *click-history*)
-    (setf *click-cwd* (probe-file target-path))
+    (push *cwd* *history*)
+    (setf *cwd* (probe-file target-path))
 
     ;; (uiop:chdir target-path)
     ;; (setf *default-pathname-defaults* (uiop:getcwd)) ;lock in
-    *click-cwd*))
+    *cwd*))
 
 (defun which (command)
   "Find path of an executable"
@@ -235,6 +244,7 @@ Commonly
 
 (defun head (filename &optional (n 10))
   "Display the first N lines of a file (default 10)"
+  ;; &&& check exists
   (with-open-file (stream filename)
     (loop for line = (read-line stream nil)
           for i from 1 to n
@@ -243,6 +253,7 @@ Commonly
 
 (defun tail (filename &optional (n 10))
   "Display the last N lines of a file (default 10)"
+  ;; &&& check exists
   (with-open-file (stream filename)
     (let ((lines (loop for line = (read-line stream nil)
                        while line
@@ -253,7 +264,7 @@ Commonly
 (defun touch (filename)
   "In current wd! Create a new empty file or update the timestamp of an existing file"
   ;; &&& make location independent, ie take pathnames or string for here
-  (let ((target-file (merge-pathnames (pathname filename) (uiop:getcwd))))
+  (let ((target-file (merge-pathnames (pathname filename) *cwd*)))
     (with-open-file (stream target-file
                             :direction :output
                             :if-exists :append
@@ -262,21 +273,33 @@ Commonly
       (declare (ignore stream)))
     (probe-file filename)))
 
-(defun move-file (file target-dir)
-  "Move a file, using pathname substitution subset of rename-file, returns a path to the new location."
-  (let ((file-found (probe-file file))
-        (target-dir-found (probe-file target-dir)))
-    (unless file-found
-      (error "Cannot move file~%~A~%File does not exist." (namestring file)))
-    (unless target-dir-found
-      (error "Cannot move file to target-dir~%~A~%Target does not exist." (namestring target-dir)))
+;; (defun move-file (file target-dir)
+;;   "Move a file, using pathname substitution subset of rename-file, returns a path to the new location."
+;;   ;; &&& (rename-file)
+;;   (let ((file-found (probe-file file))
+;;         (target-dir-found (probe-file target-dir)))
+;;     (unless file-found
+;;       (error "Cannot move file~%~A~%File does not exist." (namestring file)))
+;;     (unless target-dir-found
+;;       (error "Cannot move file to target-dir~%~A~%Target does not exist." (namestring target-dir)))
 
-    (rename-file file-found
-                 (make-pathname :defaults file-found
-                                :directory (pathname-directory target-dir-found)))
-    (probe-file (make-pathname :defaults file-found
-                               :directory (pathname-directory target-dir-found)))))
+;;     (rename-file file-found
+;;                  (make-pathname :defaults file-found
+;;                                 :directory (pathname-directory target-dir-found)))
+;;     (probe-file (make-pathname :defaults file-found
+;;                                :directory (pathname-directory target-dir-found)))))
 
+(defun mkdir (dirname)
+  "Create a new directory in the current working directory"
+  (let ((new-dir (merge-pathnames (pathname dirname) *cwd*)))
+    ;; append trailing slash after dirname
+    (ensure-directories-exist (format nil "~A/" new-dir))))
+
+(defun rmdir (dirname)
+  "Remove an empty directory if it exists in the current working directory"
+  (let ((target-dir (merge-pathnames (pathname dirname) *cwd*)))
+    ;; append trailing slash after dirname
+    (uiop:delete-empty-directory (format nil "~A/" target-dir))))
 
 #|
 ;;;; ==================================== end of evaluated code
@@ -289,24 +312,15 @@ Commonly
 ;;;; =================================== active construction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; build
 
-;; cd etc should acccept #P
-;; slime has a docs page that should be in click docs
-
-;; rename file variations
-(rename-file #P"baaaa" (make-pathname :type "txt"))
-;; delete file
-(delete-file <file>)
-(ensure-directories-exist #P"/home/user/temp/lower/")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; scratch
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; reference
 
-How to clear repl to initial state
-#+(or) for code isolation to prevent evaluation
-
 ;;;; ==================================== bash rough implementation
 ;; The command is implemented to provide simple function. Use at your own risk and test as you go.
-;; It may be a wrapper, it might even be slopfully slop
+;; It may be a wrapper, it might break everythin
+
+
 
 (defun rm (filename)
   "Remove a file in the current working directory"
@@ -338,17 +352,6 @@ TODO Not recursive. Only files"
           (uiop:copy-file src dest)
           (format t "File '~A' copied to '~A' successfully.~%" source destination))
         (format t "Source file '~A' not found.~%" source))))
-
-
-(defun rmdir (dirname)
-  "Remove an empty directory if it exists in the current working directory"
-  (let ((target-dir (merge-pathnames (pathname dirname) (uiop:getcwd))))
-    (uiop:delete-empty-directory (format nil "~A/" target-dir))))
-
-(defun mkdir (dirname)
-  "Create a new directory in the current working directory"
-  (let ((new-dir (merge-pathnames (pathname dirname) (pwd))))
-    (ensure-directories-exist (format nil "~A/" new-dir)))) ; need trailing slash after dirname to create the final dir!
 
 (defun echo (&rest args)
   "Print arguments to standard ouput"
@@ -444,9 +447,7 @@ date
 uname
 
 ;;;; =================================== nushell planned
-
-oh maybe all of it?
-Just the raddest bits of nushell the danger of even considering implementing nushell in CL is like sirens calling me.
+maybe all of it?
 
 |#
 
