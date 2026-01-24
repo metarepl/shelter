@@ -40,34 +40,41 @@
    :on-project
    :touch ; &&& add to docs
    :move-file ; &&& add to docs
-   :*default-pathname-initialized*
-   :*default-pathname-project*
+   :*click-initialized*
+   :*click-cwd*
    ))
 
 (in-package :click) ;; Also enter this in the REPL!
 
 ;;;; ==================================== initialization
 
+(defvar *click-initialized*
+  "Set to the location from which click first invoked")
+(defparameter *click-cwd*
+  "click maintains its own sense of cwd to allow default-pathname-defaults and uiop:getcwd to be unaffected")
+(defparameter *click-history* '())
+
 (defun on-start ()
   "&&& everything that should happen every startup"
-  ;;(quicklisp:update-dist "quicklisp")
-  ;;&&& error (quicklisp:update-dist "ultralisp")
+  ;; (quicklisp:update-dist "quicklisp")
+  ;; (quicklisp:update-dist "ultralisp")
   ;; (quicklisp:update-all-dists :prompt nil)
 
   ;; &&& start clerk
   ;; &&& clerk jobs
+
   ;; locations complementary to  *default-pathname-defaults*
-  (defvar *default-pathname-initialized* (uiop:getcwd)
-    "Set to the location from which invoked, immutable")
-  (defparameter *default-pathname-project* (uiop:getcwd)
-    "Set to the location from which invoked, changable to set the project root"))
+  (setf *click-initialized* (uiop:getcwd))
+  (setf *click-cwd* (uiop:getcwd))
+  (push *click-cwd* *click-history*)
+  )
+
 (on-start)
 
 (defun on-project ()
   "&&& everything that should happen once the user has navigated to target location"
   ;; additional clerk jobs
-  (defparameter *default-pathname-project* (uiop:getcwd)
-    "Set to the location from which invoked, changable to set the project root"))
+  (setf *click-cwd* (uiop:getcwd)))
 
 ;;;; ==================================== file system utilities
 (defun directory-depth (&optional (depth 1) (paths '(#P"/")))
@@ -160,8 +167,8 @@ eg system-apropos, describe"
   "TODO fast and simple printing utility
 takes a string like: The (quick) brown (fox)
 substitutes the inline parens to a format statement of the type specified
-evaluates the format statement
-"(&&&))
+evaluates the format statement"
+  (print "not implemeted"))
 
 ;; Commands are listed in priority order. The headings are moved down as work is completed
 
@@ -186,8 +193,13 @@ files: (uiop:directory-files (uiop:getcwd))"
       ($cmd (format nil "ls ~A" argstring))))
 
 (defun pwd ()
-  "Print working directory. (uiop:getcwd)"
-  (uiop:getcwd))
+  "Print state of working directories, returns *click-cwd*
+Commonly
+(uiop:getcwd)"
+  (format t "~&*click-cwd*: ~A" *click-cwd*)
+  (format t "~&uiop:getcwd: ~A" (uiop:getcwd))
+  (format t "~&*default-pathname-defaults*: ~A" *default-pathname-defaults*)
+  (values *click-cwd* (uiop:getcwd) *default-pathname-defaults*))
 
 ;;;; ==================================== bash tested
 ;; The command basically works as it should, if any functionality is missing it should be noted in docstring.
@@ -196,18 +208,24 @@ files: (uiop:directory-files (uiop:getcwd))"
   "Change directory. Defaults to ~"
 ;; &&& cd etc should acccept #P
   (let ((target-path (cond
-                       ((null path)(user-homedir-pathname))
-                       ((string= path "..")(uiop:pathname-parent-directory-pathname (uiop:getcwd)))
-                       ((string= path "~")(user-homedir-pathname))
+                       ((null path) (user-homedir-pathname))
+                       ((string= (namestring path) "..")
+                        (uiop:pathname-parent-directory-pathname *click-cwd*))
+                       ((string= (namestring path) "~")(user-homedir-pathname))
                        (t path))))
-    ;; &&& could test if target-path exists
-    (uiop:chdir target-path)
-    (setf *default-pathname-defaults* (uiop:getcwd)) ;lock in
-    (pwd)))
+    ;; test if target-path exists
+    (assert (not (null (probe-file target-path))) (target-path)
+            "path must exist. entry: ~A" path)
+    (push *click-cwd* *click-history*)
+    (setf *click-cwd* (probe-file target-path))
+
+    ;; (uiop:chdir target-path)
+    ;; (setf *default-pathname-defaults* (uiop:getcwd)) ;lock in
+    *click-cwd*))
 
 (defun which (command)
   "Find path of an executable"
-  ($cmd (format nil "which ~A" command)))
+  (cmd:$cmd (format nil "which ~A" command)))
 
 (defun cat (filename)
   "Display contents of a file"
@@ -273,7 +291,6 @@ files: (uiop:directory-files (uiop:getcwd))"
 
 ;; cd etc should acccept #P
 ;; slime has a docs page that should be in click docs
-
 
 ;; rename file variations
 (rename-file #P"baaaa" (make-pathname :type "txt"))
