@@ -1,49 +1,31 @@
+;;;; ===================================  startup sequence
+;; qlot init
+;; qlot install
+;; ,-'
+;; (asdf:load-system "lamb.base.click")
+
 ;;;; ===================================  set environment
                                         ; imports
 
-(ql:quickload :pathname-utils)
-(ql:quickload :cl-fad)
-(ql:quickload :filesystem-utils)
-(ql:quickload :file-attributes)
-(ql:quickload :osicat)
-(ql:quickload :filepaths)
-(ql:quickload :ppath)
-(ql:quickload :file-finder)
-(ql:quickload :cmd)
-(ql:quickload :py4cl2)
-(ql:quickload :quicksearch)
-(ql:quickload :str)
-(ql:quickload :mito)
-(ql:quickload :cl-ppcre)
-(ql:quickload :local-time)
-(ql:quickload :1am)
-(ql:quickload :lisp-unit2)
-(ql:quickload :verbose)
-(ql:quickload :iterate)
-(ql:quickload :clerk)
-(ql:quickload :access)
-(ql:quickload :fset)
-(ql:quickload :misc-extensions) ;for gmap helper for fset
-(ql:quickload :listopia)
-(ql:quickload :com.inuoe.jzon)
-(ql:quickload :cl-csv)
-(ql:quickload :fuzzy-match) ; for find-dir filtering
-
-;(ql:quickload :clesh)
-;(use-package :named-readtables)
-;(in-readtable clesh:syntax)
-
                                         ; package def
-(defpackage :click
+(in-package #:cl-user)
+(defpackage #:click
                                         ; whole package import
-  (:use :cl :str :cmd :file-finder)
+  (:use #:cl)
                                         ; shadowing, declares dominant function
-  (:shadowing-import-from :cmd :current-directory)
+  (:shadowing-import-from #:cmd #:current-directory)
                                         ; specific function import to this namespace
-  (:import-from :uiop
+  (:import-from #:uiop
    :subdirectories :directory-files :getcwd)
                                         ; rename package and or function
-  (:local-nicknames (:jzon :com.inuoe.jzon))
+  (:local-nicknames
+                    (:a :alexandria)
+                    (:i :iterate)
+                    (:s :serapeum)
+                    ;;
+                    (:jzon :com.inuoe.jzon)
+                    (:fuzz :fuzzy-match)
+                    (:fifi :file-finder))
                                         ; export functions and params to the click: name space
   (:export
    :pwd
@@ -62,8 +44,7 @@
    :*default-pathname-project*
    ))
 
-                                        ; enter package
-(in-package :click) ; Also enter this in the REPL!
+(in-package :click) ;; Also enter this in the REPL!
 
 ;;;; ==================================== initialization
 
@@ -451,3 +432,21 @@ oh maybe all of it?
 Just the raddest bits of nushell the danger of even considering implementing nushell in CL is like sirens calling me.
 
 |#
+
+
+;; &&& trying to fix the osicat/conda issue
+
+;; (ql:quickload :cffi)
+;; (ql:quickload :cffi-toolchain)
+
+;; (setf cffi-toolchain:*cc* "x86_64-linux-gnu-gcc")
+;; (setf cffi-toolchain:*cc-flags* nil)
+;; (setf cffi-toolchain:*ld* "x86_64-linux-gnu-gcc")
+;; (setf cffi-toolchain:*ld-dll-flags* nil)
+;; (setf cffi-toolchain:*ld-exe-flags* nil)
+
+;; (setf cffi:*foreign-library-directories* '())
+;; (setf cffi:*foreign-library-directories* '("/usr/lib" "/lib"))
+
+;; (asdf:clear-system :osicat)
+;; (ql:quickload :osicat :verbose t)
