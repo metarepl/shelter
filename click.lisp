@@ -10,11 +10,11 @@
 
                                         ; package def
 (in-package #:cl-user)
-(defpackage #:click
+(defpackage :click
                                         ; whole package import
   (:use #:cl)
                                         ; shadowing, declares dominant function
-  (:shadowing-import-from #:cmd #:current-directory)
+  ;; (:shadowing-import-from #:cmd #:current-directory)
                                         ; specific function import to this namespace
   (:import-from #:uiop
    :subdirectories :directory-files :getcwd)
