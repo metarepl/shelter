@@ -1,13 +1,14 @@
 ;;;; ===================================  startup sequence
 
 ;; qlot init
-;; qlot install
+;; qlot add dist http://dist.ultralisp.org/
+;; qlot add dist http://beta.quicklisp.org/dist/quicklisp.txt
+;; qlot install ;; repeat if qlot dist bug
+;;
 ;; ,-'
-;; (asdf:load-system "click")
+;; (asdf:load-system "lamb.base.click")
 
 ;;;; ===================================  set environment
-                                        ; imports
-
                                         ; package def
 (in-package #:cl-user)
 (defpackage #:click
@@ -17,14 +18,16 @@
   ;; (:shadowing-import-from #:cmd #:current-directory)
                                         ; specific function import to this namespace
   (:import-from #:uiop
-   :subdirectories :directory-files :getcwd)
+   #:subdirectories
+   #:directory-files
+   #:getcwd)
                                         ; rename package and or function
   (:local-nicknames
-                    (:a :alexandria)
-                    (:i :iterate)
-                    (:s :serapeum)
+                    (:a #:alexandria)
+                    (:i #:iterate)
+                    (:s #:serapeum)
                     ;;
-                    (:jzon :com.inuoe.jzon)
+                    (:jzon #:com.inuoe.jzon)
                     (:fuzz :fuzzy-match)
                     (:fifi :file-finder))
                                         ; export functions and params to the click: name space

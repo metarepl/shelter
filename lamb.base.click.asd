@@ -1,4 +1,4 @@
-(defsystem :click
+(defsystem :lamb.base.click
   :description "a pseudo command-line-interface in the repl, common imports, repl environment setup"
   :author "common-lamb (https://github.com/common-lamb)"
   :version "0.0.1"
