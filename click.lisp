@@ -1,4 +1,5 @@
 ;;;; ===================================  startup sequence
+
 ;; qlot init
 ;; qlot install
 ;; ,-'
@@ -27,7 +28,12 @@
                     (:fuzz :fuzzy-match)
                     (:fifi :file-finder))
                                         ; export functions and params to the click: name space
-  (:export
+  (;; locations
+   :*init-dir*
+   :*cwd*
+   :*history*
+   ;; commands
+   :on-project
    :pwd
    :ls
    :cd
@@ -36,17 +42,16 @@
    :head
    :tail
    :touch ; &&& add to docs
-   ;; :move-file ; &&& add to docs
-   ;; :rename-file
    :mkdir
    :rmdir
+   :rm
+   :echo
+   ;; :move-file ; &&& add to docs
+   ;; :rename-file
+   ;; :mv
    ;; :grep
    ;; :echo
    ;; :find-dir
-   ;; :on-project
-   :*init-dir*
-   :*cwd*
-   :*history*
    ))
 
 (in-package :click) ;; Also enter this in the REPL!
@@ -81,9 +86,15 @@
 (on-start)
 
 (defun on-project ()
-  "&&& everything that should happen once the user has navigated to target location"
-  ;; additional clerk jobs
-  (setf *cwd* (uiop:getcwd)))
+  "Everything that should happen once the user has navigated to target location.
+set
+  uiop:cwd
+  *default-pathname-defaults* "
+  ;; &&& additional clerk jobs
+  ;; change working dir
+  (uiop:chdir *cwd*)
+  ;; lock in
+  (setf *default-pathname-defaults* *cwd*))
 
 ;;;; ==================================== file system utilities
 ;; (defun directory-depth (&optional (depth 1) (paths '(#P"/")))
@@ -193,8 +204,6 @@
 Common
 dirs: (uiop:subdirectories (uiop:getcwd))
 files: (uiop:directory-files (uiop:getcwd))"
-  ;; (ls) => pathnames
-  ;; (ls "-al") =>
   (if (null argstring)
       (append
        (uiop:subdirectories *cwd*)
@@ -202,11 +211,12 @@ files: (uiop:directory-files (uiop:getcwd))"
       (cmd:$cmd (format nil "ls ~A ~A" argstring *cwd*))))
 
 (defun pwd ()
-  "Print state of working directories, returns *cwd*
+  "Print state of working directory like locations,
+  returns click:*cwd*
 Common
 (uiop:getcwd)"
-  (format t "~&*cwd*: ~A" *cwd*)
-  (format t "~&uiop:getcwd: ~A" (uiop:getcwd))
+  (format t "~&click:*cwd*: ~A" *cwd*)
+  (format t "~&(uiop:getcwd): ~A" (uiop:getcwd))
   (format t "~&*default-pathname-defaults*: ~A" *default-pathname-defaults*)
   (values *cwd* (uiop:getcwd) *default-pathname-defaults*))
 
@@ -214,8 +224,13 @@ Common
 ;; The command basically works as it should, if any functionality is missing it should be noted in docstring.
 
 (defun cd (&optional path)
-  "Change directory. Defaults to ~"
-;; &&& cd etc should acccept #P
+  "Change directory. Defaults to (user-homedir-pathname)
+Args
+  path #P or string to some existing directory
+Common
+  (uiop:chdir target-path) ; change working dir
+  (setf *default-pathname-defaults* (uiop:getcwd)) ; lock in "
+
   (let ((target-path (cond
                        ((null path) (user-homedir-pathname))
                        ((string= (namestring path) "..")
@@ -227,9 +242,6 @@ Common
             "path must exist. entry: ~A" path)
     (push *cwd* *history*)
     (setf *cwd* (probe-file target-path))
-
-    ;; (uiop:chdir target-path)
-    ;; (setf *default-pathname-defaults* (uiop:getcwd)) ;lock in
     *cwd*))
 
 (defun which (command)
@@ -273,6 +285,53 @@ Common
       (declare (ignore stream)))
     (probe-file filename)))
 
+(defun mkdir (dirname)
+  "Create a new directory in the current working directory"
+  (let ((new-dir (merge-pathnames (pathname dirname) *cwd*)))
+    ;; append trailing slash after dirname
+    (ensure-directories-exist (format nil "~A/" new-dir))))
+
+(defun rmdir (dirname)
+  "Remove an empty directory if it exists in the current working directory"
+  (let ((target-dir (merge-pathnames (pathname dirname) *cwd*)))
+    (if (probe-file target-dir)
+        (progn
+          ;; append trailing slash after dirname
+          (uiop:delete-empty-directory (format nil "~A/" target-dir))
+          (format t "Dir '~A' deleted successfully.~%" dirname))
+        (format t "Dir '~A' not found.~%" dirname))))
+
+(defun rm (filename)
+  "Remove a file in the current working directory"
+  (let ((target-file (merge-pathnames (pathname filename) *cwd*)))
+    (if (probe-file target-file)
+        (progn
+          (delete-file target-file)
+          (format t "File '~A' deleted successfully.~%" filename))
+        (format t "File '~A' not found.~%" filename))))
+
+(defun echo (&rest args)
+  "Print arguments to standard ouput"
+  (format t "~{~A~%~}~%" args))
+
+#|
+;;;; ==================================== end of evaluated code
+
+;; Commands are listed in priority order. The headings are moved down as work is completed
+
+
+
+;;;; =================================== active construction
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; build
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; scratch
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; reference
+
+;;;; ==================================== bash rough implementation
+;; The command is implemented to provide simple function. Use at your own risk and test as you go.
+;; It may be a wrapper, it might break everything
+
 ;; (defun move-file (file target-dir)
 ;;   "Move a file, using pathname substitution subset of rename-file, returns a path to the new location."
 ;;   ;; &&& (rename-file)
@@ -288,48 +347,6 @@ Common
 ;;                                 :directory (pathname-directory target-dir-found)))
 ;;     (probe-file (make-pathname :defaults file-found
 ;;                                :directory (pathname-directory target-dir-found)))))
-
-(defun mkdir (dirname)
-  "Create a new directory in the current working directory"
-  (let ((new-dir (merge-pathnames (pathname dirname) *cwd*)))
-    ;; append trailing slash after dirname
-    (ensure-directories-exist (format nil "~A/" new-dir))))
-
-(defun rmdir (dirname)
-  "Remove an empty directory if it exists in the current working directory"
-  (let ((target-dir (merge-pathnames (pathname dirname) *cwd*)))
-    ;; append trailing slash after dirname
-    (uiop:delete-empty-directory (format nil "~A/" target-dir))))
-
-#|
-;;;; ==================================== end of evaluated code
-
-
-;; Commands are listed in priority order. The headings are moved down as work is completed
-
-
-
-;;;; =================================== active construction
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; build
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; scratch
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; reference
-
-;;;; ==================================== bash rough implementation
-;; The command is implemented to provide simple function. Use at your own risk and test as you go.
-;; It may be a wrapper, it might break everythin
-
-
-
-(defun rm (filename)
-  "Remove a file in the current working directory"
-  (let ((target-file (merge-pathnames (pathname filename) (pwd))))
-    (if (probe-file target-file)
-        (progn
-          (delete-file target-file)
-          (format t "File '~A' deleted successfully.~%" filename))
-        (format t "File '~A' not found.~%" filename))))
 
 (defun mv (source destination)
   "Move a file from source to destination
@@ -353,9 +370,6 @@ TODO Not recursive. Only files"
           (format t "File '~A' copied to '~A' successfully.~%" source destination))
         (format t "Source file '~A' not found.~%" source))))
 
-(defun echo (&rest args)
-  "Print arguments to standard ouput"
-  (format t "~{~A~%~}~%" args))
 
 (defun chown (owner filename)
   "Change ownership of a file"
