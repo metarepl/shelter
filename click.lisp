@@ -10,7 +10,7 @@
 
                                         ; package def
 (in-package #:cl-user)
-(defpackage :click
+(defpackage #:click
                                         ; whole package import
   (:use #:cl)
                                         ; shadowing, declares dominant function
@@ -28,7 +28,8 @@
                     (:fuzz :fuzzy-match)
                     (:fifi :file-finder))
                                         ; export functions and params to the click: name space
-  (;; locations
+  (:export
+   ;; locations
    :*init-dir*
    :*cwd*
    :*history*
