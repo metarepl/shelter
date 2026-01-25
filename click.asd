@@ -1,10 +1,10 @@
-(defsystem :lamb.base.click
+(defsystem :click
   :description "a pseudo command-line-interface in the repl, common imports, repl environment setup"
   :author "common-lamb (https://github.com/common-lamb)"
   :version "0.0.1"
   :license "MIT"
   :depends-on (
-               ;; foundational packages
+               ;; foundational systems
                :alexandria ; ql alexandria
                :serapeum ; ql serapeum
                :bordeaux-threads ; ql bordeaux-threads

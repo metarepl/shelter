@@ -3,7 +3,7 @@
 ;; qlot init
 ;; qlot install
 ;; ,-'
-;; (asdf:load-system "lamb.base.click")
+;; (asdf:load-system "click")
 
 ;;;; ===================================  set environment
                                         ; imports
