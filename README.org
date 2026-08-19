@@ -219,6 +219,36 @@ assumed are accomplished by some explicit command.
   - interactive help menu
   - not implemented
 
+** naming convention
+
+naming of systems and packages has very few constraints, these are the patterns I often use.
+
+*** repo name
+
+- github.com/metarepl/cool-proj
+  - metarepl.category-specifier.cool-proj.asd
+  - package.lisp
+  - src/cool-proj.lisp
+
+*** system name
+
+(asdf:defsystem "metarepl.category-specifier.cool-proj" ;; must match the asd file name
+  :depends-on (:other-asdf-system)
+  :serial t
+  :components (
+               (:file "package")
+               (:module "src"
+                :components (
+                             (:file "cool-proj")
+                             ))))
+*** package name
+
+(defpackage #:cool-proj
+  (:use #:cl
+        #:uiop)
+  (:export #:*my-symbol*
+           #:my-function))
+
 ** Packages and imports
 
   lisp packages

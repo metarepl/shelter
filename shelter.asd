@@ -5,13 +5,14 @@
   :license "MIT"
   :depends-on (
                ;; foundational systems
-               :alexandria
-               :serapeum
+               :alexandria ;; &&& document functions as outline
+               :serapeum ;; &&& document functions as outline
                :bordeaux-threads
                :iterate
+               :cl-ppcre
+               ;;
                :fset
                :misc-extensions ;; gmap for fset
-               :cl-ppcre
                ;; filesystem
                :filesystem-utils
                :fuzzy-match
@@ -22,7 +23,7 @@
                ;; commands
                :py4cl2
                :cmd
-               ;; stuff
+               ;; useful
                :quicksearch
                :mito
                :local-time
@@ -35,5 +36,6 @@
                :str
                )
   :serial t
-  :components ((:file "click") ; a .lisp file
+  :components ((:file "package") ; a .lisp file defining the package(s)
+               (:file "shelter") ; a .lisp file
                (:static-file "README.org")))
