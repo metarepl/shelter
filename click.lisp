@@ -1,17 +1,11 @@
 ;;;; ===================================  startup sequence
 
-;; qlot init
-;; qlot add dist http://dist.ultralisp.org/
-;; qlot add dist http://beta.quicklisp.org/dist/quicklisp.txt
-;; qlot install ;; repeat if qlot dist bug
-;;
-;; ,-'
-;; (asdf:load-system "lamb.base.click")
+;; (asdf:load-system "metarepl.setup.shelter")
 
 ;;;; ===================================  set environment
                                         ; package def
 (in-package #:cl-user)
-(defpackage #:click
+(defpackage #:shelter
                                         ; whole package import
   (:use #:cl)
                                         ; shadowing, declares dominant function
@@ -30,7 +24,7 @@
                     (:jzon #:com.inuoe.jzon)
                     (:fuzz :fuzzy-match)
                     (:fifi :file-finder))
-                                        ; export functions and params to the click: name space
+                                        ; export functions and params to the shelter: name space
   (:export
    ;; locations
    :*init-dir*
@@ -58,7 +52,7 @@
    ;; :find-dir
    ))
 
-(in-package :click) ;; Also enter this in the REPL!
+(in-package :shelter) ;; Also enter this in the REPL!
 
 ;;;; ==================================== setup
 
@@ -68,9 +62,9 @@
 ;;;; ==================================== initialization
 
 (defvar *init-dir*
-  "Set to the location from which click first invoked")
+  "Set to the location from which shelter first invoked")
 (defparameter *cwd*
-  "click maintains its own sense of cwd to allow default-pathname-defaults and uiop:getcwd to be unaffected")
+  "shelter maintains its own sense of cwd to allow default-pathname-defaults and uiop:getcwd to be unaffected")
 (defparameter *history* '())
 
 (defun on-start ()
@@ -179,7 +173,7 @@ set
 ;;         ;;return
 ;;         final))))
 
-;;;; ==================================== click utilities
+;;;; ==================================== shelter utilities
 
 ;; (defun help (type)
 ;;   "display a message that makes help and system info discoverable
@@ -216,10 +210,10 @@ files: (uiop:directory-files (uiop:getcwd))"
 
 (defun pwd ()
   "Print state of working directory like locations,
-  returns click:*cwd*
+  returns shelter:*cwd*
 Common
 (uiop:getcwd)"
-  (format t "~&click:*cwd*: ~A" *cwd*)
+  (format t "~&shelter:*cwd*: ~A" *cwd*)
   (format t "~&(uiop:getcwd): ~A" (uiop:getcwd))
   (format t "~&*default-pathname-defaults*: ~A" *default-pathname-defaults*)
   (values *cwd* (uiop:getcwd) *default-pathname-defaults*))

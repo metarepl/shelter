@@ -1,21 +1,22 @@
-* CLICK
+* SHELTER
 
-Command Line Interface Common Kit
+A "Shell" providing familiar linux Command Line Interface in the Common Lisp REPL
+An introduction by example to Common Lisp by common patterns
 
   - Purpose
-    - CLICK answers the question: what 20%  does 80% of the work?
+    - Shelter answers the question: what 20%  does 80% of the work?
       - concepts
       - operations
       - packages
-    - CLICK serves as an on ramp to CL concepts by assuming prior linux and programming knowledge
+    - Shelter serves as an on ramp to CL concepts by assuming prior linux and programming knowledge
       - Only the initial setup and discovery of a CL environment is an obstacle.
       - Getting over this bump to the good stuff of Common Lisp should be made butttery smooth, it is worth it.
       - Assuming that users interested in CL have prior bash knowledge, is the key
-    - CLICK butters daily tasks, such that the REPL becomes easier than terminal
+    - Shelter butters daily tasks, such that the REPL becomes easier than terminal
       - So that projects can begin in the REPL and then grow into their potential
       - To prevent the all to common nightmare where a quick-experiment in bash becomes a monster
 
-      CLICK is not meant to be a comprehensive introduction, or the ultimate
+      Shelter is not meant to be a comprehensive introduction, or the ultimate
       library. These are my opinionated selections and most used examples that get
       me productive and learning through use. I enjoy the sprawling options and
       obscure tools that common lisp provides, but a focused on-boarding would
@@ -86,12 +87,12 @@ sbcl --eval '(ql-dist:install-dist "http://dist.ultralisp.org/" :prompt nil)' --
 
 &&& dist order
 
-** load CLICK
+** load Shelter
 
 TODO upload to ultralisp.
 This will have to be loaded manually for now.
 #+begin_src bash
-  git clone https://github.com/lamb-duh/click ~/quicklisp/local-projects/click
+  git clone https://github.com/metarepl/shelter ~/common-lisp/shelter
 #+end_src
 
 &&& how to open the editor
@@ -99,8 +100,8 @@ This will have to be loaded manually for now.
 
 evaluate
 #+begin_src lisp
-    (ql:quickload :click)
-    (usepackage :click)
+    (ql:quickload :shelter)
+    (usepackage :shelter)
 #+end_src
 
 * Shell Operations
@@ -185,7 +186,7 @@ Many granular steps are available and required to precisely specify the system,
 none of this is particularly verbose, but it does require a change of details to
 attend to. If something is not working as expected, I check what actions I have
 assumed are accomplished by some explicit command.
-** click custom
+** shelter custom
 
 - *default-pathname-initialized*
   - root pathname for point of initization
@@ -270,7 +271,7 @@ Package symbols interaction details
      :subdirectories :directory-files :getcwd)
                                           ; rename package and or function
     (:local-nicknames (:jzon :com.inuoe.jzon))
-                                          ; export functions and params to the click: name space
+                                          ; export functions and params to the shelter: name space
     (:export
      :my-function
      :*my-parameter*
@@ -1690,9 +1691,9 @@ https://iterate.common-lisp.dev
 #+end_src
 
 ** event scheduling
-*** click
+*** shelter
 
-&&& Initialization functions custom to click
+&&& Initialization functions custom to shelter
 - on-start
 - on-project
 
@@ -1975,7 +1976,7 @@ CITATIONS FOR LISP PAPERS
 Common Lisp Environment for Experiment and Analysis
 
 All advanced data science ML and modelling goes here
-If click is the living room clean is the laboratory
+If shelter is the living room clean is the laboratory
 
 I want an operating system for data science,
 deployable pipelines and experiment tracking is the goal
