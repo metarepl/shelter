@@ -129,10 +129,10 @@ install from command line
     git checkout develop
 
     #copy my dotfile
-    temp="~/dotfile"
+    temp="~/temp-dotfile"
     mkdir -p ${temp} && cd ${temp}
-    git clone https://github.com/metarepl/uncommon-dotfiles.git ~/uncommon-dotfiles
-    cd ~/uncommon-dotfiles
+    git clone https://github.com/metarepl/uncommon-dotfiles.git
+    cd uncommon-dotfiles
     cp spacemacs/.spacemacs ~/.spacemacs
     cd ~ && rm -rf ${temp}
 
@@ -144,11 +144,12 @@ install from command line
     SPC q q
 #+end_src
 
-- basic spacemacs dotfile guide
+basic spacemacs dotfile guide
+
   - ~/.spacemacs configures spacemacs and can be modified to suit your needs
   - search for "dotspacemacs-configuration-layers"
   - this is a list of "layers" spacemacs provides
-  - for more options see https://www.spacemacs.org/ click "layers list"
+  - for more options click "layers list" on the homepage
 
 ** use shelter
 
@@ -170,10 +171,7 @@ evaluate in the REPL
   ;; load shelter
   (asdf:load-system :shelter)
   (use-package :shelter)
-#+end_src
 
-evaluate in the REPL
-#+begin_src lisp
   ;; use shelter
   (ls)
   (cd)
@@ -200,111 +198,129 @@ Unfortunately, incumbent language designers chose conflicting terminology.
 Restated in more familiar terms: A package (in lisp: system) is a collection of namespaces.
 A namespace (in lisp: package) is a collection of exports.
 
-The system declaration organizes packages, but it also declares dependencies, organizes source code and the build order.
-The ASDF system declaration is used to by the build system.
-This is like make, but more powerful more flexible and far easier to use.
+ASDF is another-system-definition-facility
+
+The system declaration is easy to use to organize packages,
+but it also declares system dependencies, organizes source code and manages the build order.
+The ASDF system declaration is used to facilitate the build system which is part of ASDF.
+This build system is like make, but far easier to use in addition to being more flexible and more powerful.
 By beginning with ASDF systems, the whole dependency tree of systems can be compiled into the image,
 with one command:
 
-(asdf:load-system :that-was-easy)
+#+begin_src
+  (asdf:load-system :an-easy-system) ;; the system and transitive dependencies are discovered and loaded
+#+end_src
+
+Note:
+ocicl and repocicl are systems that extend asdf. When a dependency is not locally available they will do discovery and download.
+Without ocicl and repocicl, asdf does not download.
 
 ** Systems
 
-- Lisp systems
-  - system definition is declarative
-  - contains meta data of the project similar to debian packages
-  - possible to create multiple systems per asd file
+  - Lisp systems
+    - system definition is declarative
+    - can contain meta data of the project similar to debian packages
+    - possible to create multiple systems per asd file
+    - defsystem is capable of complex loading order dependencies
 
-- it is the easy default for the asd file to match the dir, but not absolutely necessary
+  - it is the easy default for the directory name to match the asd file name, but not absolutely necessary.
+  - ie ./my-project/my-project.asd
+  - it is required that the asd file name match the defsystem &&&confirm
 
-- my-project (dir)
-  - my-project.asd (file)
+  an example simple system
+  #+begin_src lisp
 
-#+begin_src lisp
-  ;;an example my-project.asd file
-  (defsystem :my-project
-    :depends-on (:alexandria :str)
-    ;; components in flat file system
-    ;; - my-project.asd
-    ;; - my-project.lisp
-    ;; - README.org
-    :serial t
-    :components ((:file "my-project") ; a .lisp file
-                 (:static-file "README.org"))
-    ;; components in hierarchical file system
-    ;; my-project.asd
-    ;; - src
-    ;;   - utils.lisp
+    ;; with minimal components in flat file system
+    ;; - my-project (directory)
+    ;;   - my-project.asd
     ;;   - my-project.lisp
-    ;;   - config.lisp
-    ;; - test
-    ;;   - tests.lisp
-    :serial t
-    :components ((:module "src"
-                  :components ((:file "utils")
-                               (:file "my-project")
-                               (:file "config")))
-                 (:module "test"
-                  :components tests)))
-  ;; defsystem is capable of complex loading order dependencies
 
-  ;; an example my-project.lisp file
-  (in-package :cl-user)
-  (defpackage #:my-package
-    (:use :cl)
-    (:export :my-function))
-  (in-package :my-package)
-  (defun my-function ()
-    "an exported function"
-    (print "hello world"))
-#+end_src
+    ;; my-project.asd
+    (defsystem :my-project
+      :depends-on (:alexandria :str)
+      :serial t
+      :components ((:file "my-project")) ; implicitly a .lisp file
 
-Interactive loading
-  clone a project to local, eg str
-  cli nav to find system definintion, eg str.asd
-  start a lisp
-  $ sbcl
-  CL-USER>
-#+begin_src lisp
-  ;;load system definition
-  (asdf:load-asd "str.asd") ; use exact path
+      ;; my-project.lisp
+      (in-package :cl-user)
 
-  ;; load system
-  (asdf:load-system "&&&") ; will not load dependencies
-  (asdf:system-depends-on (asdf:find-system "str")) ; list of dependencies
+      (defpackage #:my-package
+        (:use :cl)
+        (:export :my-function))
 
-  (ql:quickload :str) ; recursively loads dependencies
-  (in-package :str) ; enter the package to use internal functions
+      (in-package :my-package)
 
-  ;; in emacs open str.asd file
-  C-c C-k to compile and load
+      (defun my-function ()
+        "an exported function"
+        (print "hello world"))
 
-  (ql:quickload :str)
-  (in-package ::str) or C-c ~
-#+end_src
+      #+end_src
+
+  an example well structured system
+  #+begin_src lisp
+
+    ;; with components in hierarchical file system
+    ;; - my-project (directory)
+    ;;   - my-project.asd
+    ;;   - package.lisp
+    ;;   - README.org
+    ;;   - src
+    ;;     - utils.lisp
+    ;;     - my-project.lisp
+    ;;   - test
+    ;;     - tests.lisp
+
+    ;; my-project.asd
+    (defsystem :my-project
+      :depends-on (:alexandria :str)
+      :serial t
+      :components ((:file "package")
+                   (:static-file "README.org")
+                   (:module "src"
+                    :components ((:file "utils")
+                                 (:file "my-project")))
+                   (:module "test"
+                    :components tests)))
+
+    ;; package.lisp
+    (in-package :cl-user)
+
+    (defpackage #:my-package
+      (:use #:cl)
+      (:export #:my-function))
+
+    ;; my-project.lisp
+    (in-package :my-package)
+
+    (defun my-function ()
+      "an exported function"
+      (print "hello world"))
+
+  #+end_src
 
 ** Packages and imports
 
-  lisp packages
-  a container to group symbols together
-    a symbol is a basic type denoting a funciton or a variable or other things
+  - lisp packages
+  - a container to group symbols together
+    - a symbol is a basic type denoting a funciton or a variable or other things
+    - #:some-name vs :some-name dont worry to much about this, just know that :some-name always creates a symbol and #:some-name doesnt so #: keeps packages less cluttered
 
-  a package is a first class object
-  used as namespaces
-  possible to create multiple packages per system/project
+  - a package is a first class object
+  - used as namespaces
+  - possible to create multiple packages per system/project
 
-  initially the repl places the user in the cl-user package
-  CL-USER> *package*
-  cl-user contains basic functions variables and macros, defun etc
+  - initially the repl places the user in the cl-user package
+  - cl-user contains basic functions variables and macros, defun etc
 
 #+begin_src lisp
   (in-package :cl-user) ; make cl-user package available now
+
   (defpackage :my-package
-    (:use :cl) ; :cl bring cl-user symbols into my-package
-    (:export :*exported-symbol*))
+    (:use #:cl) ; :cl bring cl-user symbols into my-package
+    (:export #:*exported-symbol*))
+
   (in-package :my-package)
 
-  ;; (export '*exported-symbol*) ;export in place or use :export in definition
   (defparameter *exported-symbol* 'hello)
 
 
@@ -350,33 +366,145 @@ Package symbols interaction details
 
 ** naming convention
 
-- naming of systems and packages has very few constraints, these are the patterns I often use.
+Naming of systems and packages has very few constraints,
+these are patterns that are useful.
+None of these patterns are rules at all, none of these characters are required or special at all.
+It's common lisp you can do what you want.
 
 *** repo name
 
-- github.com/metarepl/cool-proj
-  - metarepl.category-specifier.cool-proj.asd
+When the asd file name does not match the repository name (which becomes the directory name),
+you will need to symlink the asd file into a place asdf searches, like ~/common-lisp.
+This use pattern gives manual control over what is discovered: clone into some dir, symlink the asd file.
+This also separates the concerns of sorting repos from discovering systems.
+
+- github.com/metarepl/my-project
+  - metarepl.category-specifier.my-project.asd
   - package.lisp
+  - src/cool-proj.lisp
+
+For utility libraries, I make the repository name into the long version.
+Same use pattern of clone and symlink.
+This makes many small libraries easy to store, sort, navigate and recall what they do.
+Its ugly and verbose, but it works.
+
+- github.com/metarepl/metarepl.category-specifier.my-project.asd
+  - metarepl.category-specifier.my-project.asd
+  - package.lisp
+  - src/cool-proj.lisp
+
+For polished libraries, where user ease is primary,
+the repository name (which becomes the dir name),
+the asd file name, and its defined system name,
+and the package name should all be the same.
+This use pattern only requires cloning into somewhere asdf searches, and discovery will just work.
+
+- github.com/metarepl/shelter.asd
+  - shelter.asd (which defines system :shelter)
+  - package.lisp (which defines package :shelter)
   - src/cool-proj.lisp
 
 *** system name
 
-(asdf:defsystem "metarepl.category-specifier.cool-proj" ;; must match the asd file name
-  :depends-on (:other-asdf-system)
-  :serial t
-  :components (
-               (:file "package")
-               (:module "src"
-                :components (
-                             (:file "cool-proj")
-                             ))))
+#+begin_src lisp
+
+  (asdf:defsystem "metarepl.category-specifier.cool-proj" ;; must match the asd file name
+    :depends-on (:other-asdf-system)
+    :serial t
+    :components (
+                 (:file "package")
+                 (:module "src"
+                  :components (
+                               (:file "cool-proj")))))
+
+#+end_src
+
 *** package name
 
-(defpackage #:cool-proj
-  (:use #:cl
-        #:uiop)
-  (:export #:*my-symbol*
-           #:my-function))
+#+begin_src lisp
+
+  (defpackage #:cool-proj
+    (:use #:cl
+          #:uiop)
+    (:export #:*my-symbol*
+             #:my-function))
+
+#+end_src
+
+** manual imports and exports
+
+defpackage does a nice job of setting things up for us but if you want to bang around in an image,
+and really move the furniture around, there are commands where you can do it all manually
+
+#+begin_src
+(make-package :my-package)
+(in-package :my-package)
+
+*package* ;; current package
+
+(use-package :ppcre)
+(unuse-package :ppcre)
+
+(import 'ppcre:regex-replace)
+
+(export '*exported-symbol*)
+(unexport '*exported-symbol*)
+
+(intern 'a-symbol)
+(unintern 'a-symbol)
+#+end_src
+
+heres a good read on what is going on under the helful gaze of defpackage https://flownet.com/gat/packages.pdf
+
+** manual system loading
+
+interacting with asdf
+#+begin_src lisp
+
+  ;; get the location of the system
+  (asdf:locate-system :shelter)
+
+  ;; get the system itself
+  (asdf:find-system :shelter)
+  (inspect *) ; check out the details of the system returned in the previous command
+
+  ;; load system definition
+  (asdf:load-asd "str.asd") ;  can use exact path
+  (asdf:load-system :shelter) ; will load but not download dependencies
+
+  ;; get list of dependencies
+  (asdf:system-depends-on (asdf:find-system "str"))
+
+  (defparameter *str-deps* *) ;; grab the list returned previously
+
+  ;; begin it all again and explore ALL the dependencies
+  (asdf:find-system (first *str-deps*))
+
+#+end_src
+
+** automatic system downloading
+
+quicklisp is convenient and commonly seen in examples.
+I dont recommend it except for quick scripts.
+Using ocicl is better than quicklisp,
+because it make downloads secure,
+but it also makes downloading appear native to asdf commands.
+Then any packages that use asdf for compilation or deployment, gain discovery as well
+When your build system can do deployment and discovery, its pretty slick.
+
+#+begin_src lisp
+  ;; with quicklisp
+  (ql:quickload :str) ; recursively loads dependencies and downloads
+
+  (in-package :str) ; enter the package to use internal functions
+  (use-package :str) ; bring external symbols from str into the current package
+
+  ;; with ocicl this is equivalent to quickload
+  (asdf:load-system :str)
+  (use-package :str)
+
+#+end_src
+
 * Lisp Concepts
 ** Intro
 In the core of lisp the meta circular evaluator was discovered by John Mcarthy;
@@ -452,6 +580,9 @@ An image can contain multiple systems, and packages.
 ** REPL and error and messages
 - editor function
   - https://lispcookbook.github.io/cl-cookbook/emacs-ide.html
+  - C-c C-k to compile and load
+  - C-c ~
+
 
 - interact with the repl
   - &&&
