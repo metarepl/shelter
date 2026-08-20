@@ -185,7 +185,7 @@ evaluate in the REPL
   (describe 'pwd)
 #+end_src
 
-* project structure
+* System Structure
 
 - A SYSTEM is a collection of packages,
 - A PACKAGE is a collection of symbols,
@@ -298,19 +298,32 @@ Without ocicl and repocicl, asdf does not download.
 
   #+end_src
 
-** Packages and imports
-
-  - lisp packages
-  - a container to group symbols together
-    - a symbol is a basic type denoting a funciton or a variable or other things
-    - #:some-name vs :some-name dont worry to much about this, just know that :some-name always creates a symbol and #:some-name doesnt so #: keeps packages less cluttered
-
-  - a package is a first class object
-  - used as namespaces
-  - possible to create multiple packages per system/project
+** Package concepts
 
   - initially the repl places the user in the cl-user package
-  - cl-user contains basic functions variables and macros, defun etc
+    - cl-user contains basic functions variables and macros, defun etc
+
+  - a package is a first class object
+  - a package is just a container to group symbols together
+    - a symbol is a basic type denoting a function or a variable or other things
+  - used as namespaces
+  - possible to create multiple packages per system
+    - naming packages by functionality is useful to organize functions for discovery
+    - eg my-package (exports all)
+    - my-package/utils or my-package/config (exports specific symbols)
+  - packages don't have to be defined in a package.lisp file
+    - you can define it in any file then in-package to use it
+  - packages and files are independent
+    - a file can go in-package then define this-function
+    - then go in-package to define another function
+    - the functions' symbols will be found in their respective packages
+  - you can do what you want
+
+  - modern style
+    - defines packages in a single file package.lisp
+    - names sub packages with /
+      - eg my-package/subset
+    - uses a single package per single file of code
 
 #+begin_src lisp
   (in-package :cl-user) ; make cl-user package available now
@@ -323,7 +336,6 @@ Without ocicl and repocicl, asdf does not download.
 
   (defparameter *exported-symbol* 'hello)
 
-
   ;; check available symbols in a package
   (do-external-symbols (sym :cl)
     (print sym)) ; show current symbols ~1000
@@ -332,37 +344,66 @@ Without ocicl and repocicl, asdf does not download.
     (print sym)) ; our one symbol
 #+end_src
 
-Package symbols interaction details
-#+begin_src lisp
+** Package use
 
-                                          ; imports
+regarding #:some-name vs :some-name in package definitions.
+Don't worry to much about this,
+just know that :some-name always creates a symbol and #:some-name doesnt so #: keeps packages less cluttered
+
+load some packages
+#+begin_src lisp
+  ;; preferably use ocicl and asdf
+  (asdf:load-system :cmd)
+  (asdf:load-system :str)
+  (asdf:load-system :file-finder)
+  (asdf:load-system :com.inuoe.jzon)
+
   (ql:quickload :cmd)
   (ql:quickload :str)
   (ql:quickload :file-finder)
   (ql:quickload :com.inuoe.jzon)
-                                          ; package declaration
-  (defpackage :my-package
-                                          ; whole package import
-    (:use :cl :str :cmd :file-finder)
-                                          ; shadowing, declares dominant function
-    (:shadowing-import-from :cmd :current-directory)
-                                          ; specific function import to this namespace
-    (:import-from :uiop
-     :subdirectories :directory-files :getcwd)
-                                          ; rename package and or function
-    (:local-nicknames (:jzon :com.inuoe.jzon))
-                                          ; export functions and params to the shelter: name space
-    (:export
-     :my-function
-     :*my-parameter*
-     ))
-                                          ; enter package
-  (in-package :my-package) ; Also enter this in the REPL
-  ;; to leave (in-package :cl-user), :my-package maintains state
 
-                                          ; load local file
-  (load (merge-pathnames #P"path/to/my-file.lisp" (uiop:getcwd)))
-  #+end_src
+#+end_src
+
+Package symbols interactions
+#+begin_src lisp
+  ;; package declaration
+  (defpackage :my-package
+                                          ; provide alternate names for the package
+    (:nicknames #:mypk #:metarepl.examples.my-package)
+                                          ; doc
+    (:documentation "doc string for the package")
+                                          ; whole package import, discouraged except for :cl
+    (:use #:cl #:str #:cmd #:file-finder)
+                                          ; &&&
+    (:shadow &&&)
+                                          ; shadowing other symbols, declares dominant function
+    (:shadowing-import-from #:cmd #:current-directory)
+                                          ; specific symbol import to this package, encouraged
+    (:import-from #:uiop
+                  #:subdirectories #:directory-files :getcwd)
+                                          ; rename package and or function, nick original-name
+    (:local-nicknames (#:jzon #:com.inuoe.jzon))
+                                          ; export functions and params to the my-package: name space
+    (:export
+     #:my-function
+     #:*my-parameter*))
+#+end_src
+
+Package movement
+#+begin_src lisp
+  ;; enter package
+  (in-package :my-package) ; Also enter this in the REPL (if you want it there)
+
+  ;; do things on the repl or in the file
+
+  ;; to leave
+  (in-package :cl-user)
+
+  ;; do other things
+
+   ;; :my-package maintains state
+#+end_src
 
 ** naming convention
 
@@ -442,10 +483,16 @@ and really move the furniture around, there are commands where you can do it all
 
 *package* ;; current package
 
+(rename-package :my-package &&&)
+(add-package-local-nickname &&&)
+
 (use-package :ppcre)
 (unuse-package :ppcre)
 
 (import 'ppcre:regex-replace)
+
+(shadow 'some-sybol)
+(shadowing-import 'some-symbol)
 
 (export '*exported-symbol*)
 (unexport '*exported-symbol*)
@@ -460,6 +507,9 @@ heres a good read on what is going on under the helful gaze of defpackage https:
 
 interacting with asdf
 #+begin_src lisp
+
+  ; load a file without asdf
+  (load #P"/path/to/my-file.lisp")
 
   ;; get the location of the system
   (asdf:locate-system :shelter)
@@ -540,179 +590,14 @@ Many granular steps are available and required to precisely specify the system,
 none of this is particularly verbose, but it does require a change of details to
 attend to. If something is not working as expected, I check what actions I have
 assumed are accomplished by some explicit command.
+** Symbol
+&&& define symbol
 ** Image
 The image is the program, running in memory.
 It is live in that parts of the image can be dynamically modified.
 An image can contain multiple systems, and packages.
-** shelter custom
-
-- *default-pathname-initialized*
-  - root pathname for point of initization
-  - immutable
-- *default-pathname-project*
-  - root pathname for project
-  - mutable
-
-- find-dir
-  - fuzzy find directory
-  - details below
-
-- on-start
-  - automatically invoked
-  - sets pathname for *default-pathname-initialized*
-  - sets pathname for *default-pathname-project*
-  - updates all distributions
-  - will have clerk jobs
-
-- on-project
-  - user invokes
-  - sets pathname for *default-pathname-project*
-  - will have clerk jobs
-
-- p
-  - minimal keystoke maximal utility print parser
-  - not implementd
-
-- help
-  - interactive help menu
-  - not implemented
-
-** REPL and error and messages
-- editor function
-  - https://lispcookbook.github.io/cl-cookbook/emacs-ide.html
-  - C-c C-k to compile and load
-  - C-c ~
-
-
-- interact with the repl
-  - &&&
-- move around in error message
-  - &&&
-- Observe objects:
-  - (inspect "string")
-  - (describe "string")
-  - (apropos "string")
-  - (documentation "string")
-- Evaluate single form in place: =,-e-c=
-
-** find-dir
-
-find-dir takes a list of paths and fuzzy filters directories, if depth is set it descends into directory tree,can be sequentially applied to its own output.
-
-arg : default action : description
-root : '(#P\"/\") : a list with paths or a path in #P or string form
-depth : 0 : an integer for retrieval depth below roots, default 0 goes no deeper for filtering root list
-keep : all : space delimited words to separately(additive to set) fuzzy filter in
-drop : none : space delimited words to separately(additive to set) fuzzy filter out, applied after keep
-report : none : set true for reporting on processing, big ass reports if depth is large
-n-test : off : integer for required num of paths in output list, error and report if not "
-
-#+begin_src lisp
-
-  (find-dir :keep "lib opt" :drop "etc lib gnu" :depth 2)
-  (find-dir :report t :keep "lib opt" :drop "etc lib gnu" :depth 2)
-  (find-dir :n-test 6 :depth 3 :keep "opt" :drop "gnu"  )
-  (find-dir :drop "chrome"
-            :root (find-dir :depth 2
-                            :keep "opt"
-                            :drop "gnu"))
-
-
-#+end_src
-
-** finder
-https://github.com/lisp-maintainers/file-finder/
-
-convenience wrapper
-=(finder (name~ "string")) => #F"file_object.type"=
-granular control
-=(finder* :predicates (name~ "string" ) :root <string | #P> ) => #F"file_object.type"=
-
-
-Finder predicates
-path
-- =path~= matches when one of the path elements is contained in the file path.
-- =every-path~= same checks on the file path, but uses a logical and.
-- =path$= matches when one of the path suffixes matches the file path.
-
-file name
-- =name== matches when one of the names matches the file name (case sensitive).
-  - full file name
-- =iname== matches when one of the names matches the file name (case insensitive).
-- =name~= matches when one of the names is contained in the file basename (and not the whole path), case sensitive.
-  - partial name
-- =iname~= matches when one of the names is contained in the file, case insensitive.
-- =every-name~= same checks on the file basename, but uses a logical and.
-
-extension
-- =extension== matches file extensions
-  -  full exact
-
-recur predicates
-- =depth<= matches when the argument file is in a subdirectory of ROOT less deep than LEVEL.
-- =hidden?= return t if this is a hidden file
-
-#+begin_src lisp
-  (ql:quickload :file-finder)
-  (use-package :file-finder)
-
-
-
-  ;; basic
-  (file-finder:finder* :root "/home/user/Downloads")
-  (file-finder:finder* :predicates (file-finder:extension= "txt")
-                       :root "/home/user/Downloads")
-  ;; recur predicates
-  (file-finder:finder* :predicates (file-finder:extension= "txt")
-                       :recur-predicates (complement #'file-finder:hidden?)
-                       :root "/home/user/Downloads")
-
-  ;; predicates AND
-  (finder* :predicates (list (name~ "test")
-                             (complement (path~ "exclude"))
-                             (extension= "txt"))
-           :root "/home/user/Downloads")
-
-  ;; call with find-dir for root
-  (file-finder:finder* :predicates (file-finder:extension= "txt")
-                       :root (first (find-dir :n-test 1
-                                              :keep "Downloads"
-                                              :depth 3)))
-
-
-  ;; wrapper set interpretation is different
-  ;; and
-  (finder (<ff>)(<ff>))
-  ;; or
-  (finder (list (<ff>) (<ff>)))
-
-  ;; convert results to string to use set operations
-  ;; &&& is there a better way
-  (mapcar #'namestring (finder &&&))
-  (set-difference *), (union *)
-
-  (set-difference
-   (mapcar #'path (finder (path~ "index") (path~ "indices") (extension= "tif")))
-   (mapcar #'path (finder (path~ "tiles")))
-   :test #'equal)
-#+end_src
-
-** command line REPL
-
-$ rlwrapper sbcl #allows readline support on terminal
-
-CL-USER> (print "hello")
-"hello" ; standard out
-"hello" ; evaluation
-
-=*= references last returned evaluation
-
-** Interfacing emacs/code/REPL
-pushing parens ahead around next form
-go to source
-l to move back in stack trace
-slime-cd to change location
-* Lisp Operations
+** Incremental and Live
+* Lisp and REPL Operations
 ** Pathnames
 
 Common Lisp is older than any of the file systems in use today, its pathname
@@ -803,6 +688,108 @@ Online commentary defining paths from root is guaranteed consistent. I just set 
 
 #+end_src
 
+** find-dir
+
+find-dir takes a list of paths and fuzzy filters directories, if depth is set it descends into directory tree,can be sequentially applied to its own output.
+
+arg : default action : description
+root : '(#P\"/\") : a list with paths or a path in #P or string form
+depth : 0 : an integer for retrieval depth below roots, default 0 goes no deeper for filtering root list
+keep : all : space delimited words to separately(additive to set) fuzzy filter in
+drop : none : space delimited words to separately(additive to set) fuzzy filter out, applied after keep
+report : none : set true for reporting on processing, big ass reports if depth is large
+n-test : off : integer for required num of paths in output list, error and report if not "
+
+#+begin_src lisp
+
+  (find-dir :keep "lib opt" :drop "etc lib gnu" :depth 2)
+  (find-dir :report t :keep "lib opt" :drop "etc lib gnu" :depth 2)
+  (find-dir :n-test 6 :depth 3 :keep "opt" :drop "gnu"  )
+  (find-dir :drop "chrome"
+            :root (find-dir :depth 2
+                            :keep "opt"
+                            :drop "gnu"))
+
+
+#+end_src
+
+** file-finder
+https://github.com/lisp-maintainers/file-finder/
+
+convenience wrapper
+=(finder (name~ "string")) => #F"file_object.type"=
+granular control
+=(finder* :predicates (name~ "string" ) :root <string | #P> ) => #F"file_object.type"=
+
+
+Finder predicates
+path
+- =path~= matches when one of the path elements is contained in the file path.
+- =every-path~= same checks on the file path, but uses a logical and.
+- =path$= matches when one of the path suffixes matches the file path.
+
+file name
+- =name== matches when one of the names matches the file name (case sensitive).
+  - full file name
+- =iname== matches when one of the names matches the file name (case insensitive).
+- =name~= matches when one of the names is contained in the file basename (and not the whole path), case sensitive.
+  - partial name
+- =iname~= matches when one of the names is contained in the file, case insensitive.
+- =every-name~= same checks on the file basename, but uses a logical and.
+
+extension
+- =extension== matches file extensions
+  -  full exact
+
+recur predicates
+- =depth<= matches when the argument file is in a subdirectory of ROOT less deep than LEVEL.
+- =hidden?= return t if this is a hidden file
+
+#+begin_src lisp
+  (ql:quickload :file-finder)
+  (use-package :file-finder)
+
+
+
+  ;; basic
+  (file-finder:finder* :root "/home/user/Downloads")
+  (file-finder:finder* :predicates (file-finder:extension= "txt")
+                       :root "/home/user/Downloads")
+  ;; recur predicates
+  (file-finder:finder* :predicates (file-finder:extension= "txt")
+                       :recur-predicates (complement #'file-finder:hidden?)
+                       :root "/home/user/Downloads")
+
+  ;; predicates AND
+  (finder* :predicates (list (name~ "test")
+                             (complement (path~ "exclude"))
+                             (extension= "txt"))
+           :root "/home/user/Downloads")
+
+  ;; call with find-dir for root
+  (file-finder:finder* :predicates (file-finder:extension= "txt")
+                       :root (first (find-dir :n-test 1
+                                              :keep "Downloads"
+                                              :depth 3)))
+
+
+  ;; wrapper set interpretation is different
+  ;; and
+  (finder (<ff>)(<ff>))
+  ;; or
+  (finder (list (<ff>) (<ff>)))
+
+  ;; convert results to string to use set operations
+  ;; &&& is there a better way
+  (mapcar #'namestring (finder &&&))
+  (set-difference *), (union *)
+
+  (set-difference
+   (mapcar #'path (finder (path~ "index") (path~ "indices") (extension= "tif")))
+   (mapcar #'path (finder (path~ "tiles")))
+   :test #'equal)
+#+end_src
+
 ** File Operations
 
 #+begin_src lisp
@@ -866,13 +853,38 @@ namespace help
   (documentation "string")
 #+end_src
 
+** REPL and error and messages
+** Interfacing emacs/code/REPL
+pushing parens ahead around next form
+go to source
+l to move back in stack trace
+slime-cd to change location
+
+- editor functions
+  - https://lispcookbook.github.io/cl-cookbook/emacs-ide.html
+  - C-c C-k to compile and load
+  - C-c ~
+  - Evaluate single form in place: =,-e-c=
+
+- interact with the repl
+  - &&&
+- move around in error message
+  - &&&
+- Observe objects:
+  - (inspect "string")
+  - (describe "string")
+  - (apropos "string")
+  - (documentation "string")
+
 * Syntax Concepts
-Functions within functions within functions. Look inward.
 ** Parentheses are just trees
-Don't look at the parens, look at the indentation and see the tree.
+
+Functions within functions within functions. Look inward.
+
+Don't look at the parens, thats the computers job so don't do that,
+instead focus on the indentation and see the tree.
 The abstract syntax tree is immediately available to the programmer and to the program
 
-Math example
 #+begin_src lisp
 
   (+ (* 3 4) (- 10 5) (/ 12 (+ 2 2)))
@@ -887,11 +899,11 @@ Math example
            2)))
 #+end_src
 
-Nested lists example
 #+begin_src lisp
+
   (defvar *tree* '(A(B(D)(E))(C(F)(G)(H))))
 
-  ;; data is just a tree of relationships
+  ;; data is just a tree of nested relationships
   (A
    (B
     (D)
@@ -900,11 +912,12 @@ Nested lists example
     (F)
     (G)
     (H)))
+
 #+end_src
 
-Tree traversal example
 #+begin_src lisp
-  ;; code is just trees of steps
+
+  ;; a function is just a tree of steps and branches
   (defun traverse (tree)
     (when tree                        ;stops when nothing
       (if (atom tree)                 ;test for a leaf node
@@ -912,14 +925,27 @@ Tree traversal example
           (progn                      ; else, do these things
             (print (car tree))        ;  print parent before decending
             (traverse (cdr tree)))))) ;  descend into the remainder of the tree
+
 #+end_src
 
-Q: If code is just trees, and data and calculations are just trees
-and we have code that walks into a tree
+#+begin_src lisp
+
+  ;; a program is just a tree of processes
+  (defun program ()
+    (do-the-thing)
+    (or (do-one-other-thing)
+        (do-the-remaining-things)))
+
+#+end_src
+
+Q: If a program is just trees of trees, and data and functions are just trees
+and we can have code that walks a tree
 does that mean a program could go into a program?
 could a program treat a program like data and change it?
 
-A: It is just a tree, code is data, data is code.
+A: code is data, data is code, and yes after all it is just a tree
+
+Wooooaaaahh Duuuuude
 
 ** Variables
 defparameter vs defvar, both set global variables
@@ -1367,7 +1393,6 @@ CL macros manipulates lists of symbols
 
 * Shelter Operations
 
- &&&
 
 ** Implemented
 
@@ -1405,6 +1430,39 @@ Listed in priority order from partially completed to planned.
 15. uname
 
 I would love to pilfer the best parts of nushell as well
+
+** shelter custom
+
+- *default-pathname-initialized*
+  - root pathname for point of initization
+  - immutable
+- *default-pathname-project*
+  - root pathname for project
+  - mutable
+
+- find-dir
+  - fuzzy find directory
+  - details below
+
+- on-start
+  - automatically invoked
+  - sets pathname for *default-pathname-initialized*
+  - sets pathname for *default-pathname-project*
+  - updates all distributions
+  - will have clerk jobs
+
+- on-project
+  - user invokes
+  - sets pathname for *default-pathname-project*
+  - will have clerk jobs
+
+- p
+  - minimal keystoke maximal utility print parser
+  - not implementd
+
+- help
+  - interactive help menu
+  - not implemented
 
 * Interop
 ** Cmd
