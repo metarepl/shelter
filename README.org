@@ -559,39 +559,39 @@ When your build system can do deployment and discovery and compilation and its t
 
 * Lisp Concepts
 ** Intro
-In the core of lisp the meta circular evaluator was discovered by John Mcarthy;
-from system primitives lisp develops a self evaluator for the language, and then builds out to
-create the language. The implication of this is that lisp is built ON lisp, and
-when you work you will be working ON the language. You are outside a set of
-tools building and refining tools to move up and out. This is profoundly
-different from working in a language. For other programming scenarios we work
-within the constraints of the language. We work on one program, in a language
-which is in turn inside the operating system.
 
-When we work on lisp we are inside the image. Outside the image is the OS handling
-multi tasking. The running lisp image is best though of as like an OS, not
-quite, but almost. Inside the image is a place for programs, programs, we are
-not restricted to a single program. This is why the order of function
-definition doesn't matter, all the functions are compiled into the image,
-multiple programs in one document can exist within the image at one time. The
-running image for us has an interactive repl, functions, programs, scheduled
-tasks, individual functions can be hot recompiled while the image
-runs. Essentially, we have at our disposal a language we can modify to fit any
-domain specific purpose, within a live system that we can interactively design to
-accomplish a task or behaviour, including running multiple programs
-simultaneously. When the goal is reached, that image can be exported as is, for
-distribution. Yes that could be a simple script, an app, or an OS.
+In the core of lisp, the meta circular evaluator was discovered by John Mcarthy.
+From system primitives lisp develops a self evaluator, and then builds out to
+create the language. The implication of this is that Lisp is built ON lisp, and
+when you work with it, you will be also be working ON the language.
 
-Freedom, sometimes means being lost. many operations we take for granted as
-necessarily being bound together are orthogonal in CL.
-- import is independent of use
-- chdir is independent of *default-directory-defaults*
-- in-package for the code is indpendent of in-package for the REPL
-- &&&
-Many granular steps are available and required to precisely specify the system,
-none of this is particularly verbose, but it does require a change of details to
-attend to. If something is not working as expected, I check what actions I have
-assumed are accomplished by some explicit command.
+The correct perspective is that you are outside a set of tools or a material,
+refining the tools, building and forming the material to move up toward your target.
+This material is the abstract syntax tree itself.
+The tools are the ability to shape the syntax, as if all changes were native to the language.
+Expression is unbounded.
+
+This is profoundly different from working IN a language.
+For other programming scenarios, we work within the constraints of the language.
+We work ON a program, IN a language, the language sets the boundary of expression.
+
+When we work on lisp we are inside the image.
+Outside the image is the OS handling multi tasking.
+The running lisp image is best though of as like an OS, not quite, but almost.
+Inside the image is a place for programs, we are not restricted to a single program.
+Multiple programs from one or multiple files can exist within the image at one time.
+The order of function definition does not matter, the functions are compiled into the image in memory.
+
+The running image has an interactive shell like repl, functions, programs, scheduled tasks.
+Individual functions can be hot recompiled while the image runs.
+When the goal is reached, that image can be exported as is, for distribution.
+That could be a script, an app, or an OS.
+
+Essentially, we have at our disposal a language we can modify to fit any domain specific purpose,
+within a live system that we can interactively modify to contain the activity required,
+including running multiple programs simultaneously.
+It is not quite an OS, but almost, hence the terminology for software units as 'systems'.
+
 ** Symbol
 
 Symbols are a distinct and fundamental type
@@ -717,6 +717,19 @@ Inspection of the stack is similar to browsing old internet, it is clickable bro
 I LOVE getting errors, its like having a print statement showing the state of my program
 at every function and variable (all the way down to memory addresses if you want to go that far).
 Then surfing my program to the source, fixing just that bit, and carrying on from there.
+
+** Differences
+
+many operations we assume are bound together in other languages are independent in common lisp.
+- import is independent of use
+- chdir is independent of *default-directory-defaults*
+- in-package for the code is indpendent of in-package for the REPL
+- &&&
+
+Many granular steps are available and required to precisely specify the system,
+none of this is particularly verbose, but it does require a change of details to
+attend to. If something is not working as expected, I check what actions I have
+assumed are accomplished by some explicit command.
 
 * Lisp and REPL Operations
 ** Pathnames
@@ -1513,8 +1526,6 @@ CL macros manipulates lists of symbols
 - its purpose is to be a shelter used to explore files at runtime without making any impact on the running program
 
 * Shelter Operations
-
-
 ** Implemented
 
 - builtins that wont be overridden
