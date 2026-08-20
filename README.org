@@ -1,41 +1,46 @@
 * SHELTER
 
 A "Shell" providing familiar linux Command Line Interface in the Common Lisp REPL
-An introduction by example to Common Lisp by common patterns
+An introduction to Common Lisp by common patterns
+
+The initial interface to a computer is the terminal and shell: poke filesystem, issue command, minimal structure, maximal flexibility.
+
+The vast majority of projects begin in shell:  minimal grand plans, maximal inquiry,
+then some abomination of bash or poor perf python grows around that beginning (why not both!).
+
+The aim of shelter is to make that exploratory phase a path which flows directly into CL.
+The goal is to make evolution from early inquiry to a fully fledged high perf program easy.
+
+Common lisp provides an interactive REPL, which has comparable attributes to a terminal,
+and the majority of shell like functions exist, although they may have arcane names, and be found spread across an expedition of packages.
+
+In shelter, basic shell commands should feel native.
+Anybody with programming/bash experience should be immediately at home on the REPL.
+
+The educational parts of Shelter are not meant to be a comprehensive introduction, or the ultimate library.
+These are my opinionated selections and frequently used examples that get me productive and learning through use.
+Though I do enjoy the sprawling options and obscure tools that common lisp provides,
+a focused on-boarding would have helped immensely, this is the practical onboarding I would have wanted to have.
+
+This is a Work In Progress
+
+Initially shell functions can be simple wrappers,
+the goal is to eventually have them all in portable common lisp,
+and have each doc-string describe the canonical CL approach.
 
   - Purpose
     - Shelter answers the question: what 20%  does 80% of the work?
       - concepts
       - operations
-      - packages
-    - Shelter serves as an on ramp to CL concepts by assuming prior linux and programming knowledge
-      - Only the initial setup and discovery of a CL environment is an obstacle.
-      - Getting over this bump to the good stuff of Common Lisp should be made butttery smooth, it is worth it.
-      - Assuming that users interested in CL have prior bash knowledge, is the key
-    - Shelter butters daily tasks, such that the REPL becomes easier than terminal
+      - systems and packages
+    - Shelter serves as an on ramp to common lisp concepts
+      - The setup and discovery of common lisp is an obstacle due to its history and complexity.
+      - Getting past this steep initial learning curve to the good stuff of Common Lisp should be made gradually.
+      - Assuming that users interested in common lisp have prior linux and bash knowledge, is the key
+    - Shelter should ease daily tasks, such that the REPL becomes easier and more useful than bash shell
       - So that projects can begin in the REPL and then grow into their potential
-      - To prevent the all to common nightmare where a quick-experiment in bash becomes a monster
 
-      Shelter is not meant to be a comprehensive introduction, or the ultimate
-      library. These are my opinionated selections and most used examples that get
-      me productive and learning through use. I enjoy the sprawling options and
-      obscure tools that common lisp provides, but a focused on-boarding would
-      have helped immensely.
-
-      This is a Work In Progress
-
-  - Future Contents
-    - readme with basic linux operations especially notes on paths/dirs/files/fileio
-    - basic package import and common usage reference
-      - these will be opinionated selections of the single best modern approach
-    - shell command wrappers for basic ops
-    - a few helper functions for finding and printing and help discovery
-    - everything you need in the first full week of using CL
-    - anything you need everyday
-
-      Note: let &&& be "right here completion needed" My default search
-      highlights it. As long as I enter &&& I can jump away to chase another
-      idea. When the search returns nothing I can assume 99% completeness.
+Note: let &&& be "right here completion needed"
 
 * Startup
 
@@ -57,11 +62,6 @@ install from command line
 #+begin_src bash
 sudo apt-get install sbcl
 #+end_src
-
-** Spacemacs
-
-TODO install guide
-TODO basic CL dotfile guide
 
 ** quicklisp
 
@@ -85,169 +85,190 @@ install from command line
 sbcl --eval '(ql-dist:install-dist "http://dist.ultralisp.org/" :prompt nil)' --quit
 #+end_src
 
-&&& dist order
+** ocicl
 
-** load Shelter
+install from command line
+#+begin_src bash
+# install ocicl binary to &&&
+temp="~/ocicl-temp"
+mkdir -p ${temp} && cd ${temp}
+git clone https://github.com/ocicl/ocicl.git
+cd ocicl
+sbcl --load setup.lisp
+cd ~ && rm -rf ${temp}
 
-TODO upload to ultralisp.
-This will have to be loaded manually for now.
+# modify ~/.sbclrc
+ocicl setup
+
+# create a "top level" ocicl dir in home
+cd ~
+sbcl --eval '(asdf:load-system :str)' --quit
+#+end_src
+
+** shelter
+
+install from command line
 #+begin_src bash
   git clone https://github.com/metarepl/shelter ~/common-lisp/shelter
 #+end_src
 
-&&& how to open the editor
-&&& how to eval
+** spacemacs
 
-evaluate
-#+begin_src lisp
-    (ql:quickload :shelter)
-    (usepackage :shelter)
+install from command line
+  #+begin_src bash
+    # install emacs
+    apt install emacs
+
+    # clone spacemacs
+    git clone https://github.com/syl20bnr/spacemacs ~/.emacs.d
+    cd ~/.emacs.d
+    git checkout develop
+
+    #copy my dotfile
+    temp="~/dotfile"
+    mkdir -p ${temp} && cd ${temp}
+    git clone https://github.com/metarepl/uncommon-dotfiles.git ~/uncommon-dotfiles
+    cd ~/uncommon-dotfiles
+    cp spacemacs/.spacemacs ~/.spacemacs
+    cd ~ && rm -rf ${temp}
+
+    # first start will bootstrap spacemacs
+    emacs
+    # wait for compilation
+
+    # quit
+    SPC q q
 #+end_src
 
-* Shell Operations
+- basic spacemacs dotfile guide
+  - ~/.spacemacs configures spacemacs and can be modified to suit your needs
+  - search for "dotspacemacs-configuration-layers"
+  - this is a list of "layers" spacemacs provides
+  - for more options see https://www.spacemacs.org/ click "layers list"
 
-99% of my projects begin in shell, just poking around, I certainly have no
-grand plans beyond inquiry, then some abomination of bash or poor perf python grows around
-that beginning. I aim to make bootstrapping that exploratory phase easy in CL. My goal is to make evolution
-from early inquiry to a fully fledged high perf program easy.
+** use shelter
 
-Basic shell commands should feel native. Anybody with programming/bash
-experience should be immediately at home on the CL REPL. Initially These can be
-simple wrappers, the goal is to eventually have them all in portable common
-lisp, and have each doc-string describe the canonical CL approach. Ideally I
-would love to wrangle the best parts of nushell to this kit as well.
+- in bash open spacemacs
+  - emacs
+- open scratch buffer
+  - SPC b s
+- actvate lisp mode
+  - SPC SPC lisp-mode
+- activate REPL
+  - , '
+- at the prompt evaluate commands
+  - (print "hello lisp") RET
 
-** Implemented
+evaluate in the REPL
+#+begin_src lisp
+  ;; preferred with ocicl
+  (asdf:load-system :shelter)
+#+end_src
 
-- builtins that wont be overridden
-  - sort
-  - time
-  - find
+evaluate in the REPL
+#+begin_src lisp
+  (ls)
+  (cd)
+  (pwd)
+  ;; &&& etc
+  ;; (documentation 'pwd 'function)
+#+end_src
 
-1. pwd
-2. ls
-3. cd
-4. which
-5. cat
-6. head
-7. tail
+* project structure
 
-** Not implemented
-Listed in priority order from partially completed to planned. In code move status headings down as completion progresses.
+- A SYSTEM is a collection of packages,
+- A PACKAGE is a collection of symbols,
+- A SYMBOL can be a variable or a function,
+- Symbols are exported by the package declaration.
+- Packages are organized by the system declaration
 
-1. rm
-2. mv
-3. cp
-4. touch
-5. rmdir
-6. mkdir
-7. echo
-8. chown
-9. chmod
-10. grep (file grep, needs to map ppcre string matching for composability)
-11. wc
-12. uniq
-13. whoami
-14. date
-15. uname
+Common lisp gave these names to this nested structure of code and project organization long long ago when the earth was green.
+Unfortunately, incumbent language designers chose conflicting terminology.
+Restated in more familiar terms: A package (in lisp: system) is a collection of namespaces.
+A namespace (in lisp: package) is a collection of exports.
 
-* System Concepts
-** Intro
-In the core of lisp the meta circular evaluator was discovered by John Mcarthy;
-from system primitives lisp develops a self evaluator for the language, and then builds out to
-create the language. The implication of this is that lisp is built ON lisp, and
-when you work you will be working ON the language. You are outside a set of
-tools building and refining tools to move up and out. This is profoundly
-different from working in a language. For other programming scenarios we work
-within the constraints of the language. We work on one program, in a language
-which is in turn inside the operating system.
+The system declaration organizes packages, but it also declares dependencies, organizes source code and the build order.
+The ASDF system declaration is used to by the build system.
+This is like make, but more powerful more flexible and far easier to use.
+By beginning with ASDF systems, the whole dependency tree of systems can be compiled into the image,
+with one command:
 
-When we work on lisp we are inside the image. Outside the image is the OS handling
-multi tasking. The running lisp image is best though of as like an OS, not
-quite, but almost. Inside the image is a place for programs, programs, we are
-not restricted to a single program. This is why the order of function
-definition doesn't matter, all the functions are compiled into the image,
-multiple programs in one document can exist within the image at one time. The
-running image for us has an interactive repl, functions, programs, scheduled
-tasks, individual functions can be hot recompiled while the image
-runs. Essentially, we have at our disposal a language we can modify to fit any
-domain specific purpose, within a live system that we can interactively design to
-accomplish a task or behaviour, including running multiple programs
-simultaneously. When the goal is reached, that image can be exported as is, for
-distribution. Yes that could be a simple script, an app, or an OS.
+(asdf:load-system :that-was-easy)
 
-Freedom, sometimes means being lost. many operations we take for granted as
-necessarily being bound together are orthogonal in CL.
-- import is independent of use
-- chdir is independent of *default-directory-defaults*
-- in-package for the code is indpendent of in-package for the REPL
-- &&&
-Many granular steps are available and required to precisely specify the system,
-none of this is particularly verbose, but it does require a change of details to
-attend to. If something is not working as expected, I check what actions I have
-assumed are accomplished by some explicit command.
-** shelter custom
+** Systems
 
-- *default-pathname-initialized*
-  - root pathname for point of initization
-  - immutable
-- *default-pathname-project*
-  - root pathname for project
-  - mutable
+- Lisp systems
+  - system definition is declarative
+  - contains meta data of the project similar to debian packages
+  - possible to create multiple systems per asd file
 
-- find-dir
-  - fuzzy find directory
-  - details below
+- it is the easy default for the asd file to match the dir, but not absolutely necessary
 
-- on-start
-  - automatically invoked
-  - sets pathname for *default-pathname-initialized*
-  - sets pathname for *default-pathname-project*
-  - updates all distributions
-  - will have clerk jobs
+- my-project (dir)
+  - my-project.asd (file)
 
-- on-project
-  - user invokes
-  - sets pathname for *default-pathname-project*
-  - will have clerk jobs
+#+begin_src lisp
+  ;;an example my-project.asd file
+  (defsystem :my-project
+    :depends-on (:alexandria :str)
+    ;; components in flat file system
+    ;; - my-project.asd
+    ;; - my-project.lisp
+    ;; - README.org
+    :serial t
+    :components ((:file "my-project") ; a .lisp file
+                 (:static-file "README.org"))
+    ;; components in hierarchical file system
+    ;; my-project.asd
+    ;; - src
+    ;;   - utils.lisp
+    ;;   - my-project.lisp
+    ;;   - config.lisp
+    ;; - test
+    ;;   - tests.lisp
+    :serial t
+    :components ((:module "src"
+                  :components ((:file "utils")
+                               (:file "my-project")
+                               (:file "config")))
+                 (:module "test"
+                  :components tests)))
+  ;; defsystem is capable of complex loading order dependencies
 
-- p
-  - minimal keystoke maximal utility print parser
-  - not implementd
+  ;; an example my-project.lisp file
+  (in-package :cl-user)
+  (defpackage #:my-package
+    (:use :cl)
+    (:export :my-function))
+  (in-package :my-package)
+  (defun my-function ()
+    "an exported function"
+    (print "hello world"))
+#+end_src
 
-- help
-  - interactive help menu
-  - not implemented
+Interactive loading
+  clone a project to local, eg str
+  cli nav to find system definintion, eg str.asd
+  start a lisp
+  $ sbcl
+  CL-USER>
+#+begin_src lisp
+  ;;load system definition
+  (asdf:load-asd "str.asd") ; use exact path
 
-** naming convention
+  ;; load system
+  (asdf:load-system "&&&") ; will not load dependencies
+  (asdf:system-depends-on (asdf:find-system "str")) ; list of dependencies
 
-naming of systems and packages has very few constraints, these are the patterns I often use.
+  (ql:quickload :str) ; recursively loads dependencies
+  (in-package :str) ; enter the package to use internal functions
 
-*** repo name
+  ;; in emacs open str.asd file
+  C-c C-k to compile and load
 
-- github.com/metarepl/cool-proj
-  - metarepl.category-specifier.cool-proj.asd
-  - package.lisp
-  - src/cool-proj.lisp
-
-*** system name
-
-(asdf:defsystem "metarepl.category-specifier.cool-proj" ;; must match the asd file name
-  :depends-on (:other-asdf-system)
-  :serial t
-  :components (
-               (:file "package")
-               (:module "src"
-                :components (
-                             (:file "cool-proj")
-                             ))))
-*** package name
-
-(defpackage #:cool-proj
-  (:use #:cl
-        #:uiop)
-  (:export #:*my-symbol*
-           #:my-function))
+  (ql:quickload :str)
+  (in-package ::str) or C-c ~
+#+end_src
 
 ** Packages and imports
 
@@ -314,79 +335,106 @@ Package symbols interaction details
   (load (merge-pathnames #P"path/to/my-file.lisp" (uiop:getcwd)))
   #+end_src
 
-** Loading Systems
+** naming convention
 
-Lisp systems
-  system definition is declarative
-  contains meta data of the project similar to debian packages
-  possible to create multiple systems per asd file
+- naming of systems and packages has very few constraints, these are the patterns I often use.
 
-it is default for the asd file to match the dir
-- my-project (dir)
-  - my-project.asd
+*** repo name
 
-#+begin_src lisp
-  ;;an example my-project.asd file
-  (defsystem :my-project
-    :depends-on (:alexandria :str)
-    ;; components in flat file system
-    ;; - my-project.asd
-    ;; - my-project.lisp
-    ;; - README.org
-    :serial t
-    :components ((:file "my-project") ; a .lisp file
-                 (:static-file "README.org"))
-    ;; components in hierarchical file system
-    ;; my-project.asd
-    ;; - src
-    ;;   - utils.lisp
-    ;;   - my-project.lisp
-    ;;   - config.lisp
-    ;; - test
-    ;;   - tests.lisp
-    :serial t
-    :components ((:module "src"
-                  :components ((:file "utils")
-                               (:file "my-project")
-                               (:file "config")))
-                 (:module "test"
-                  :components tests)))
-  ;; defsystem is capable of complex loading order dependencies
+- github.com/metarepl/cool-proj
+  - metarepl.category-specifier.cool-proj.asd
+  - package.lisp
+  - src/cool-proj.lisp
 
-  ;; an example my-project.lisp file
-  (in-package :cl-user)
-  (defpackage #:my-package
-    (:use :cl)
-    (:export :my-function))
-  (in-package :my-package)
-  (defun my-function ()
-    "an exported function"
-    (print "hello world"))
-#+end_src
+*** system name
 
-Interactive loading
-  clone a project to local, eg str
-  cli nav to find system definintion, eg str.asd
-  start a lisp
-  $ sbcl
-  CL-USER>
-#+begin_src lisp
-  ;;load system definition
-  (asdf:load-asd "str.asd") ; use exact path
+(asdf:defsystem "metarepl.category-specifier.cool-proj" ;; must match the asd file name
+  :depends-on (:other-asdf-system)
+  :serial t
+  :components (
+               (:file "package")
+               (:module "src"
+                :components (
+                             (:file "cool-proj")
+                             ))))
+*** package name
 
-  ;; load system
-  (asdf:load-system "&&&") ; will not load dependencies
-  (asdf:system-depends-on (asdf:find-system "str")) ; list of dependencies
+(defpackage #:cool-proj
+  (:use #:cl
+        #:uiop)
+  (:export #:*my-symbol*
+           #:my-function))
+* Lisp Concepts
+** Intro
+In the core of lisp the meta circular evaluator was discovered by John Mcarthy;
+from system primitives lisp develops a self evaluator for the language, and then builds out to
+create the language. The implication of this is that lisp is built ON lisp, and
+when you work you will be working ON the language. You are outside a set of
+tools building and refining tools to move up and out. This is profoundly
+different from working in a language. For other programming scenarios we work
+within the constraints of the language. We work on one program, in a language
+which is in turn inside the operating system.
 
-  (ql:quickload :str) ; recursively loads dependencies
-  (in-package :str) ; enter the package to use internal functions
+When we work on lisp we are inside the image. Outside the image is the OS handling
+multi tasking. The running lisp image is best though of as like an OS, not
+quite, but almost. Inside the image is a place for programs, programs, we are
+not restricted to a single program. This is why the order of function
+definition doesn't matter, all the functions are compiled into the image,
+multiple programs in one document can exist within the image at one time. The
+running image for us has an interactive repl, functions, programs, scheduled
+tasks, individual functions can be hot recompiled while the image
+runs. Essentially, we have at our disposal a language we can modify to fit any
+domain specific purpose, within a live system that we can interactively design to
+accomplish a task or behaviour, including running multiple programs
+simultaneously. When the goal is reached, that image can be exported as is, for
+distribution. Yes that could be a simple script, an app, or an OS.
 
-  ;; in emacs open str.asd file
-  C-c C-k to compile and load
+Freedom, sometimes means being lost. many operations we take for granted as
+necessarily being bound together are orthogonal in CL.
+- import is independent of use
+- chdir is independent of *default-directory-defaults*
+- in-package for the code is indpendent of in-package for the REPL
+- &&&
+Many granular steps are available and required to precisely specify the system,
+none of this is particularly verbose, but it does require a change of details to
+attend to. If something is not working as expected, I check what actions I have
+assumed are accomplished by some explicit command.
+** Image
+The image is the program, running in memory.
+It is live in that parts of the image can be dynamically modified.
+An image can contain multiple systems, and packages.
+** shelter custom
 
-  (ql:quickload :str)
-  (in-package ::str) or C-c ~
-#+end_src
+- *default-pathname-initialized*
+  - root pathname for point of initization
+  - immutable
+- *default-pathname-project*
+  - root pathname for project
+  - mutable
+
+- find-dir
+  - fuzzy find directory
+  - details below
+
+- on-start
+  - automatically invoked
+  - sets pathname for *default-pathname-initialized*
+  - sets pathname for *default-pathname-project*
+  - updates all distributions
+  - will have clerk jobs
+
+- on-project
+  - user invokes
+  - sets pathname for *default-pathname-project*
+  - will have clerk jobs
+
+- p
+  - minimal keystoke maximal utility print parser
+  - not implementd
+
+- help
+  - interactive help menu
+  - not implemented
 
 ** REPL and error and messages
 - editor function
@@ -402,60 +450,6 @@ Interactive loading
   - (apropos "string")
   - (documentation "string")
 - Evaluate single form in place: =,-e-c=
-
-** Pathnames
-
-Common Lisp is older than any of the file systems in use today, its pathname
-system is still more powerful and still relevant to every possible system. That
-is a clue that there are some significant differences in how this is being
-acomplished, some will not be intuitive.
-https://lispcookbook.github.io/cl-cookbook/files.html
-is essential reading, twice.
-
-These tools cover far MORE than linux can acomplish with a filesystem. Clarifying
-and reducing initial friction for file and dir ops is one of the major objectives of
-this project.
-- https://github.com/Shinmera/pathname-utils
-- https://edicl.github.io/cl-fad/
-- https://github.com/Shinmera/filesystem-utils
-- https://shinmera.github.io/file-attributes/
-- https://osicat.common-lisp.dev/manual/osicat.html
-- https://github.com/fosskers/filepaths
-- https://codeberg.org/fourier/ppath
-- https://asdf.common-lisp.dev/uiop.html
-
-#+begin_src lisp
-                                          ; pathname objects are not strings
-  #P"/bin/"
-  ;; subcomponents can be manipulated individually
-  ;; inspect &&&
-
-  ;; ~ for home
-  (user-homedir-pathname)
-
-  ;; . for this location
-  (uiop:getcwd)
-
-
-#+end_src
-
-Override default-pathname-defaults
-#+begin_src lisp
-  ;; this guy causes issues if Im not paying attention
-  (print *default-pathname-defaults*)
-
-  ;; &&&note elsewhere how (print (foo)) is transparent, prints and passes (foo) through
-  ;; very nice for debugging
-
-  (uiop:with-current-directory ("/bin")
-    (print (uiop:getcwd))
-    (directory-files "./"))
-
-  (print (uiop:getcwd))
-
-  (with-current-directory ("/tmp")
-    (print (uiop:getcwd)))
-#+end_src
 
 ** find-dir
 
@@ -559,6 +553,76 @@ recur predicates
    :test #'equal)
 #+end_src
 
+** command line REPL
+
+$ rlwrapper sbcl #allows readline support on terminal
+
+CL-USER> (print "hello")
+"hello" ; standard out
+"hello" ; evaluation
+
+=*= references last returned evaluation
+
+** Interfacing emacs/code/REPL
+pushing parens ahead around next form
+go to source
+l to move back in stack trace
+slime-cd to change location
+* Lisp Operations
+** Pathnames
+
+Common Lisp is older than any of the file systems in use today, its pathname
+system is still more powerful and still relevant to every possible system. That
+is a clue that there are some significant differences in how this is being
+acomplished, some will not be intuitive.
+https://lispcookbook.github.io/cl-cookbook/files.html
+is essential reading, twice.
+
+These tools cover far MORE than linux can acomplish with a filesystem. Clarifying
+and reducing initial friction for file and dir ops is one of the major objectives of
+this project.
+- https://github.com/Shinmera/pathname-utils
+- https://edicl.github.io/cl-fad/
+- https://github.com/Shinmera/filesystem-utils
+- https://shinmera.github.io/file-attributes/
+- https://osicat.common-lisp.dev/manual/osicat.html
+- https://github.com/fosskers/filepaths
+- https://codeberg.org/fourier/ppath
+- https://asdf.common-lisp.dev/uiop.html
+
+#+begin_src lisp
+                                          ; pathname objects are not strings
+  #P"/bin/"
+  ;; subcomponents can be manipulated individually
+  ;; inspect &&&
+
+  ;; ~ for home
+  (user-homedir-pathname)
+
+  ;; . for this location
+  (uiop:getcwd)
+
+
+#+end_src
+
+Override default-pathname-defaults
+#+begin_src lisp
+  ;; this guy causes issues if Im not paying attention
+  (print *default-pathname-defaults*)
+
+  ;; &&&note elsewhere how (print (foo)) is transparent, prints and passes (foo) through
+  ;; very nice for debugging
+
+  (uiop:with-current-directory ("/bin")
+    (print (uiop:getcwd))
+    (directory-files "./"))
+
+  (print (uiop:getcwd))
+
+  (with-current-directory ("/tmp")
+    (print (uiop:getcwd)))
+#+end_src
+
 ** Dir Operations
 Some operations use the default-pathname-defaults variable to establish the starting point, not all.
 Online commentary defining paths from root is guaranteed consistent. I just set it consistently, it is wrapped in the (cd "str") function.
@@ -629,264 +693,34 @@ Online commentary defining paths from root is guaranteed consistent. I just set 
       (format t "~A%~%" line)))
 #+end_src
 
-** command line REPL
+** Getting Help
 
-$ rlwrapper sbcl #allows readline support on terminal
+quicksearch
+https://github.com/lisp-maintainers/quicksearch
 
-CL-USER> (print "hello")
-"hello" ; standard out
-"hello" ; evaluation
+TODO (help) and (help "symbol")
+should be an interactive menu describing the options/ letting user go on to any or all sub
+(help "help") should go give detailed descriptions of each  option
 
-=*= references last returned evaluation
+package help
+symbol help
+namespace help
 
-** Interfacing emacs/code/REPL
-pushing parens ahead around next form
-go to source
-l to move back in stack trace
-slime-cd to change location
-** Most common functions
+#+begin_src lisp
+  ;;search quicklisp dists for a package
+  (ql:system-apropos "find-me")
+  ;;search all dists and github for a package
+  (quicksearch:quicksearch "find-me")
 
-1. defun - Define functions
-2. let - Create local bindings
-3. loop - Powerful iteration construct
-4. if - Conditional execution
-5. setf - Generalized assignment
-6. mapcar - Apply function to each element of a list
-7. format - Formatted output
-8. cond - Multi-way conditional
-9. defparameter - Define global variables
-10. lambda - Create anonymous functions
-11. when - Single-clause conditional
-12. unless - Negated single-clause conditional
-13. progn - Execute a series of forms sequentially
-14. dolist - Iterate over list elements
-15. cons - Construct lists
-16. car/first - Access first element of a list
-17. cdr/rest - Access rest of a list
-18. print - Print Lisp objects to a stream
-19. append - Combine lists
-20. length - Get length of a sequence
-21. list - return a list made of the arguments
-22. nth - Access nth element of a list
-23. push - Add an item to the front of a list
-24. pop - Remove and return the first item of a list
-25. aref - Access array elements
-26. read - Read Lisp objects from a stream
-27. find - Search for an item in a sequence
-28. member - Check if an item is in a list
-29. remove - Remove items from a sequence
-30. funcall - Call function by variable
-31. apply - Apply function to argument list
-32. reduce - Reduce a list to a single value
-33. sort - Sort a sequence
-34. defmacro - Define macros
-35. with-open-file - File I/O with automatic cleanup
-36. equalp - General equality predicate
-37. make-array - Create arrays
-38. subseq - Extract a subsequence
-39. typecase - Type-based conditional
-40. make-hash-table - Create hash tables
-41. gethash - Access hash table entries
-42. defclass - Define classes (for CLOS)
-43. make-instance - Create object instances
-44. slot-value - Access object slots
-45. values - Return multiple values
-46. multiple-value-bind - Bind multiple values
-47. defstruct - Define structures
-48. declare - Declare variables or provide optimization hints
-49. handler-case - Error handling
-50. load - Load and execute Lisp code from a file
-51. eval - Evaluate Lisp expressions at runtime
-52. defmethod - Define methods for generic functions
-53. destructuring-bind - Destructure complex data structures
-54. macroexpand-1 - Expand a macro once
-55. time - Measure execution time
-56. intern - Create or locate a symbol
-57. symbol-function - Access a symbol's function definition
-58. gensym - Generate unique symbols
-59. coerce - Convert between types
-60. make-string - Create a string
-61. string-trim - Remove characters from string ends
-62. concatenate - Join sequences
-63. position - Find position of an item in a sequence
-64. reverse - Reverse a sequence
-65. nreverse - Destructively reverse a sequence
-66. assoc - Look up key-value pairs in an association list
-67. every - Test if predicate is true for all elements
-68. some - Test if predicate is true for any element
-69. dotimes - Iterate a specified number of times
-70. do - General iteration construct
-71. acons - Add to an association list
-72. copy-tree - Deep copy of a tree structure
-73. remove-if - Remove elements satisfying a predicate
-74. map - Apply function to elements of multiple sequences
-75. char - Access character in a string
-76. eq - Test for object identity
-77. defgeneric - Define a generic function
-78. make-list - Create a list of specified length
-79. substitute - Replace items in a sequence
-80. parse-integer - Parse string to integer
-81. compile - Compile a function
-82. documentation - Get or set documentation string
-83. trace - Trace function calls
-84. untrace - Untrace function calls
-85. break - Enter debugger
-86. describe - Display information about an object
-87. type-of - Get type of an object
-88. typep - Test if object is of a given type
-89. restart-case - Define restarts for error handling
-90. defpackage - Define a package
-91. in-package - Switch to a package
-92. merge - Merge sorted sequences
-93. logior - Bitwise logical OR
-94. logand - Bitwise logical AND
-95. ash - Arithmetic shift
-96. floor - Integer division with floor rounding
-97. ceiling - Integer division with ceiling rounding
-98. round - Round to nearest integer
-99. random - Generate random number
-100. constantly - Create constant function
-101. identity - Identity function
-102. flet - Define local functions
-103. labels - Define locally recursive functions
-104. evenp - Test if a number is even
-105. oddp - Test if a number is odd
-106. zerop - Test if a number is zero
-107. plusp - Test if a number is positive
-108. minusp - Test if a number is negative
-109. max - Find maximum value
-110. min - Find minimum value
-111. remf - Remove a property from a property list
-112. getf - Get a property value from a property list
-113. pprint - Pretty print
-114. apropos - Search for symbols
-115. read-from-string - Read Lisp object from a string
-116. write-to-string - Write Lisp object to a string
-117. ignore-errors - Ignore errors in a form
-118. nconc - Destructively concatenate lists
-119. make-package - Create a new package
-120. find-package - Find a package by name
-121. export - Export symbols from a package
-122. import - Import symbols into a package
-123. shadow - Shadow inherited symbols
-124. shadowing-import - Import symbols, shadowing existing ones
-125. ensure-directories-exist - Create directories if they don't exist
-126. probe-file - Check if a file exists
-127. delete-file - Delete a file
-128. rename-file - Rename a file
-129. file-length - Get file size
-130. file-position - Get or set file position
-131. open - Open a file or stream
-132. close - Close a stream
-133. read-line - Read a line from a stream
-134. write-line - Write a line to a stream
-135. read-char - Read a character from a stream
-136. write-char - Write a character to a stream
-137. peek-char - Look at next character in stream without consuming it
-138. listen - Check if input is available on a stream
-139. clear-input - Clear input buffer
-140. y-or-n-p - Ask a yes-or-no question
-141. sleep - Pause execution for a specified time
-142. get-universal-time - Get universal time
-143. decode-universal-time - Convert universal time to decoded time
-144. encode-universal-time - Convert decoded time to universal time
-145. get-decoded-time - Get current time as decoded time
-146. load-compiled - Load a compiled Lisp file
-147. complement - Create complementary predicate function
-148. count - Count occurrences in a sequence
-149. count-if - Count elements satisfying a predicate
-150. position-if - Find position of element satisfying predicate
-151. remove-duplicates - Remove duplicate elements from a sequence
-152. intersection - Set intersection of sequences
-153. union - Set union of sequences
-154. set-difference - Set difference of sequences
-155. subsetp - Test if one set is a subset of another
-156. force-output - Force output on a stream
-157. finish-output - Finish pending output on a stream
-158. fresh-line - Move to a fresh line on output
-159. terpri - Terminate print line
-160. princ - Print object readably
-161. prin1 - Print object not readably
-162. pprint-newline - Insert a newline in pretty printing
-163. copy-seq - Create a copy of a sequence
-164. mod - Modulus operation
-165. fill - Fill a sequence with a value
-166. replace - Replace part of a sequence with another
-167. search - Search for a subsequence
-168. mismatch - Find first mismatch between sequences
-169. stable-sort - Stable sorting algorithm
-170. merge-pathnames - Merge pathname with defaults
-171. pathname - Create a pathname object
-172. directory - List files in a directory
-173. file-namestring - Get filename part of a pathname
-174. file-author - Get file author
-175. file-write-date - Get file modification time
-176. user-homedir-pathname - Get user's home directory pathname
-177. get-properties - Get multiple properties from property list
-178. remprop - Remove a property from a symbol
-179. symbol-plist - Get a symbol's property list
-180. copy-symbol - Create a copy of a symbol
-181. keywordp - Test if a symbol is a keyword
-182. macro-function - Get macro function of a symbol
-183. elt - Access sequence elements (more general than aref)
-184. vector - Create a vector
-185. string= - Compare strings for equality
-186. string-equal - Compare strings ignoring case
-187. string< - Compare strings lexicographically
-188. parse-float - Parse string to float (often implemented as an extension)
-189. defvar - Define global variables with optional initial value
-190. make-string-input-stream - Create a string input stream
-191. make-string-output-stream - Create a string output stream
-192. get-output-stream-string - Get string from a string output stream
-193. hash-table-count - Get number of entries in a hash table
-194. clrhash - Clear a hash table
-195. remhash - Remove an entry from a hash table
-196. maphash - Iterate over hash table entries
-197. get-internal-real-time - Get current time
-198. room - Display memory usage information
-199. functionp - Test if an object is a function
-200. symbolp - Test if an object is a symbol
-201. stringp - Test if an object is a string
-202. numberp - Test if an object is a number
-203. characterp - Test if an object is a character
-204. arrayp - Test if an object is an array
-205. listp - Test if an object is a list
-206. atom - Test if an object is an atom (not a cons)
-207. null - Test if an object is nil
-208. equal - Test for structural equality
-209. eql - Test for object identity or numeric equality
-210. string-downcase - Convert string to lowercase
-211. string-upcase - Convert string to uppercase
-212. float - Convert a number to floating-point
-213. abs - Absolute value
-214. sqrt - Square root
-215. expt - Exponentiation
-216. incf - Increment a place
-217. decf - Decrement a place
-218. nthcdr - Get the nth cdr of a list
-219. butlast - Return a list with the last n elements removed
-220. last - Get the last cons cell of a list
-221. compile-file - Compile a Lisp source file
-222. disassemble - Display machine code for a compiled function
-223. machine-type - Get machine type
-224. software-type - Get operating system type
-225. with-slots - Access slots of CLOS objects conveniently
-226. make-sequence - Create a sequence of a given type and length
-227. find-if - Find an element satisfying a predicate
-228. remove-if-not - Keep elements satisfying a predicate
-229. substitute-if - Substitute elements satisfying a predicate
-230. defconstant - Define global constants
-231. &rest - Special parameters for function definitions
-232. &optional - Special parameters for function definitions
-233. assert - Assertion macro for debugging and error checking
-234. block - Named blocks and non-local returns
-235. return-from - Named blocks and non-local returns
-236. case - Switch-like conditional construct
-237. error - Signal an error
-238. warning - Signal a warning
-239. with-open-stream - Similar to with-open-file, but for streams in general
-240. mapcan - Like mapcar, but concatenates results
-241. multiple-value-call - Call a function with multiple value returns
+  ;;inspect
+  (inspect "string")
+  ;;describe
+  (describe "string")
+  ;;apropos
+  (apropos "string")
+  ;;documentation
+  (documentation "string")
+#+end_src
 
 * Syntax Concepts
 Functions within functions within functions. Look inward.
@@ -1381,6 +1215,53 @@ CL macros manipulates lists of symbols
 ** quoting data
 ** logic
 ** control
+* Shelter Concepts
+
+- Shelter's idea of working directory is completely independent of the rest of the program.
+- In fact shelter is designed to be independent of the rest of the image
+- its purpose is to be a shelter used to explore files at runtime without making any impact on the running program
+
+* Shelter Operations
+
+ &&&
+
+** Implemented
+
+- builtins that wont be overridden
+  - sort
+  - time
+  - find
+
+1. pwd
+2. ls
+3. cd
+4. which
+5. cat
+6. head
+7. tail
+
+** Not implemented
+
+Listed in priority order from partially completed to planned.
+
+1. rm
+2. mv
+3. cp
+4. touch
+5. rmdir
+6. mkdir
+7. echo
+8. chown
+9. chmod
+10. grep (file grep, needs to map ppcre string matching for composability)
+11. wc
+12. uniq
+13. whoami
+14. date
+15. uname
+
+I would love to pilfer the best parts of nushell as well
+
 * Interop
 ** Cmd
 Calls to command line, protected and various return types
@@ -1539,7 +1420,6 @@ use.
 #+end_src
 
 ** Scripting with CL
-
 *** guides
 
 -  sly adapted as shell https://web.archive.org/web/20210730202847/https://ambrevar.xyz/lisp-repl-shell/index.html
@@ -1561,11 +1441,9 @@ The UNIX command line args can be read from the variable =sb-ext:*posix-argv*=
 
 ** &&& clojure R etc
 TODO Unified example of library interop, and program interop to minimal program with one argument for each lang
-* Packages
+* Select Systems
 
-TODO dig into ciel-lang, for inspiration and spare parts and packages
-It looks like a well intentioned project but the deployment is awfull.
-https://github.com/ciel-lang/CIEL
+Some examples are provided.
 
 ** strings
 
@@ -1582,7 +1460,7 @@ https://edicl.github.io/cl-ppcre/
 time
 https://local-time.common-lisp.dev/
 
-** Testing
+** testing
 https://github.com/lmj/1am
 https://github.com/AccelerationNet/lisp-unit2
 ** GUI
@@ -1590,9 +1468,9 @@ https://github.com/AccelerationNet/lisp-unit2
 clog common lisp omnificient gui
 https://rabbibotton.github.io/clog/cltt.pdf
 
-** Logging
+** logging
 
-https://shinmera.github.io/verbose/
+https://github.com/7max/log4cl
 
 ** iteration
 *** built in
@@ -1849,7 +1727,7 @@ https://github.com/Dimercel/listopia
   (format t "Items in inventory: ~A~%" (hash-table-count *inventory*))
 #+end_src
 
-** Data formats IO
+** data formats IO
 
 json
 https://github.com/Zulu-Inuoe/jzon/
@@ -1868,65 +1746,46 @@ on github &&& install notes
 https://www.quicklisp.org/beta/
 https://common-lisp-libraries.readthedocs.io/quicklisp/
 
-check installed dists
-(ql-dist:all-dists)
-
-&&&note on
-(quicklisp:update-all-dists)
-
-&&& how to uninstal dists
-&&&reinstall dists
-
-*** ultralisp
-
-https://ultralisp.org/
-
-*** asdf
-
-https://asdf.common-lisp.dev/
-
-* Help
-
-quicksearch
-https://github.com/lisp-maintainers/quicksearch
-
-TODO (help) and (help "symbol")
-should be an interactive menu describing the options/ letting user go on to any or all sub
-(help "help") should go give detailed descriptions of each  option
-
-package help
-symbol help
-namespace help
+- quicklisp links to docs https://quickref.common-lisp.net/index-per-library.html
+- quicklisp catalogue https://www.quicklisp.org/beta/UNOFFICIAL/docs/
+- quicklisp search https://quickdocs.org/
 
 #+begin_src lisp
-  ;;search quicklisp dists for a package
-  (ql:system-apropos "find-me")
-  ;;search all dists and github for a package
-  (quicksearch:quicksearch "find-me")
 
-  ;;inspect
-  (inspect "string")
-  ;;describe
-  (describe "string")
-  ;;apropos
-  (apropos "string")
-  ;;documentation
-  (documentation "string")
+  ;; check installed dists
+  (ql-dist:all-dists)
+
+  ;; &&&note on
+  (quicklisp:update-all-dists)
+
+  ;; &&& how to uninstal dists
+  ;; &&&reinstall dists
 #+end_src
 
-** Acknowledgements
-Smarter programmers than I have gone these ways, I have made this because I am a simple and silly sheep.
+*** ultralisp
+https://ultralisp.org/
+*** ocicl
+https://github.com/ocicl/ocicl
+*** asdf
+https://asdf.common-lisp.dev/
+* Software Sources
 
-** Resources
+ocicl libraries list
+https://raw.githubusercontent.com/ocicl/request-system-additions-here/main/all-ocicl-systems.txt
 
-ESSENTIAL
+quick lisp libraries list
+https://quickref.common-lisp.net/index-per-library.html
 
+ultralisp libraries list
+https://dist.ultralisp.org/ gets you the latest distinfo as a file
+https://dist.ultralisp.org/ultralisp/20260819025001/systems.txt gets the list of packages as a file
 
-syntax crash course
-https://learnxinyminutes.com/docs/common-lisp/
+common lisp hosting
+https://common-lisp.net/
+https://common-lisp.net/phub
 
-lisp crash course
-https://cs.gmu.edu/~sean/lisp/LispTutorial.html
+* Resources
+** essential links
 
 use the cookbook
 https://lispcookbook.github.io/cl-cookbook/
@@ -1937,59 +1796,89 @@ https://www.lispworks.com/documentation/HyperSpec/Front/
 novaspec
 https://novaspec.org/cl/
 
-awesome common lisp list
-https://github.com/CodyReichert/awesome-cl
+minispec
+https://lamberta.github.io/minispec/
 
-defacto libraries docs page
-https://common-lisp-libraries.readthedocs.io/
-- asdf - Build System
-- alexandria - Commonly Used Utilities
-- bordeaux-threads - Threading
-- cl-ppcre - Regular Expressions
-- cl-who - DSL for Markup
-- fiveam - Regression Testing Framework
-- hunchentoot - Web Server
-- iterate - Psuedocodic Iteration
-- local-time - Date and Time Manipulation
-- postmodern - PostgreSQL programming interace
-- quicklisp - Library Manager
-- usocket - Universal Socket Library
-- utilities - A collection of utility libraries
-- numcl - Lispy clone of numpy
-- unix-opts - cmd line argument parser
+** common common lisp functions
+- &&& extract outline of minispec
+** important systems
+*** uiop
+- manual https://asdf.common-lisp.dev/uiop.html
+- &&& list of functions available
+*** asdf
+- defacto docs https://asdf.common-lisp.dev/
+- manual https://www.sbcl.org/asdf/
+- &&& list of functions available
+*** alexandria
+- defacto docs https://alexandria.common-lisp.dev/draft/alexandria.html
+- manual https://alexandria.common-lisp.dev/draft/alexandria.html
+- &&& list of functions available
+*** serapeum
+- github https://github.com/ruricolist/serapeum
+- manual https://github.com/ruricolist/serapeum/blob/master/REFERENCE.md
+- &&& list of functions available
 
+** lists of packages
 
+- awesome common lisp list https://github.com/CodyReichert/awesome-cl
+- common lisp wiki, almost every CL package https://www.cliki.net/
+- another lisp https://common-lisp.net/libraries
+- defacto libraries docs page https://common-lisp-libraries.readthedocs.io/
+  - asdf - Build System
+  - alexandria - Commonly Used Utilities
+  - bordeaux-threads - Threading
+  - cl-ppcre - Regular Expressions
+  - cl-who - DSL for Markup
+  - fiveam - Regression Testing Framework
+  - hunchentoot - Web Server
+  - iterate - Psuedocodic Iteration
+  - local-time - Date and Time Manipulation
+  - postmodern - PostgreSQL programming interace
+  - quicklisp - Library Manager
+  - usocket - Universal Socket Library
+  - utilities - A collection of utility libraries
+  - numcl - Lispy clone of numpy
+  - unix-opts - cmd line argument parser
 
-GUIDES
+** programming guides
+
+- syntax crash course https://learnxinyminutes.com/docs/common-lisp/
+- lisp crash course https://cs.gmu.edu/~sean/lisp/LispTutorial.html
 - great teacher https://stevelosh.com/blog/2018/08/a-road-to-common-lisp/
 - learn lisp the hard way https://llthw.common-lisp.dev/
 - another terser cookbook https://cl-cookbook.sourceforge.net/index.html
 - common lisp by example http://csci.viu.ca/~wesselsd/courses/csci330/code/sbcl-lisp/index.html
 - successful lisp book https://dept-info.labri.fr/~strandh/Teaching/MTP/Common/David-Lamkins/contents.html
 
-WATCHING
+** learn by watching
+
 - https://www.youtube.com/@the-lisper/videos
 - https://www.youtube.com/watch?v=0RQYa2XJBKU
 - https://www.youtube.com/@philipbohun740/videos
 - https://www.youtube.com/watch?v=rmUTW5QWhhM&list=PL2VAYZE_4wRJi_vgpjsH75kMhN4KsuzR_&index=2
 
-LIBRARIES
-- asdf docs https://asdf.common-lisp.dev/
-- alexandria docs https://alexandria.common-lisp.dev/draft/alexandria.html
+** reference
 
-REFERENCE
-- common lisp wiki, almost every CL package https://www.cliki.net/
-- technical syntax quick reference http://clqr.boundp.org/clqr-a4-consec.pdf
 - sbcl man http://www.sbcl.org/manual
-- quicklisp links to docs https://quickref.common-lisp.net/index-per-library.html
-- quicklisp catalogue https://www.quicklisp.org/beta/UNOFFICIAL/docs/
-- quicklisp search https://quickdocs.org/
-- ql heavy hitters https://github.com/vindarel/lisp-maintainers
+- technical syntax quick reference http://clqr.boundp.org/clqr-a4-consec.pdf
 - documentation redirect service http://l1sp.org/html/
 - googles lisp style guide https://google.github.io/styleguide/lispguide.xml
 - style guide http://mumble.net/~campbell/scheme/style.txt
 
-READING
+** heavy hitters
+
+some seriously potent programmers
+
+- lisp-maintainers https://github.com/vindarel/lisp-maintainers
+- sharp lispers https://github.com/sharplispers
+- shinmera https://codeberg.org/shinmera/
+- fukamachi https://github.com/fukamachi
+- vindarel https://github.com/vindarel/
+- robert smith https://github.com/stylewarning
+- ruricolist https://github.com/ruricolist
+
+** reading
+
 - advanced functional programming https://www2.cs.sfu.ca/CourseCentral/310/pwfong/Lisp/2/tutorial2.html
 - page 13 explained in pythoooon https://michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/
 - page 13 in modern scheme https://www.gnu.org/software/mes/manual/html_node/LISP-as-Maxwell_0027s-Equations-of-Software.html
@@ -1998,9 +1887,10 @@ READING
 - lisp nn from primitives https://woodrush.github.io/blog/posts/2022-01-16-neural-networks-in-pure-lisp.html
 - interactive programming implications https://www.n16f.net/blog/interactive-common-lisp-development/
 
-CITATIONS FOR LISP PAPERS
+** citations
+
 - https://www.math.fau.de/wp-content/uploads/2020/09/Preprint-2002-40-scan.pdf
-&&& bring other lisp citations here!
+- &&& bring other lisp citations here!
 
 * CLEAN
 Common Lisp Environment for Experiment and Analysis
