@@ -87,6 +87,8 @@ sbcl --eval '(ql-dist:install-dist "http://dist.ultralisp.org/" :prompt nil)' --
 
 ** ocicl
 
+https://github.com/ocicl/ocicl
+
 install from command line
 #+begin_src bash
 # install ocicl binary to &&&
@@ -114,8 +116,10 @@ install from command line
 
 ** spacemacs
 
+https://www.spacemacs.org/
+
 install from command line
-  #+begin_src bash
+#+begin_src bash
     # install emacs
     apt install emacs
 
@@ -157,21 +161,30 @@ install from command line
 - activate REPL
   - , '
 - at the prompt evaluate commands
-  - (print "hello lisp") RET
 
 evaluate in the REPL
 #+begin_src lisp
-  ;; preferred with ocicl
+  ;; testing
+  (print "hello lisp")
+
+  ;; load shelter
   (asdf:load-system :shelter)
+  (use-package :shelter)
 #+end_src
 
 evaluate in the REPL
 #+begin_src lisp
+  ;; use shelter
   (ls)
   (cd)
   (pwd)
-  ;; &&& etc
-  ;; (documentation 'pwd 'function)
+  (shelter:pwd)
+
+  ;; to see available functions and variables in shelter
+  ;; (shelter: DOWN-ARROW
+
+  ;; to get more info
+  (describe 'pwd)
 #+end_src
 
 * project structure
@@ -712,13 +725,13 @@ namespace help
   ;;search all dists and github for a package
   (quicksearch:quicksearch "find-me")
 
-  ;;inspect
+  ;;inspect &&&
   (inspect "string")
-  ;;describe
+  ;;describe&&&
   (describe "string")
-  ;;apropos
+  ;;apropos&&&
   (apropos "string")
-  ;;documentation
+  ;;documentation&&&
   (documentation "string")
 #+end_src
 
