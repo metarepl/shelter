@@ -422,17 +422,17 @@ This also separates the concerns of sorting repos from discovering systems.
 - github.com/metarepl/my-project
   - metarepl.category-specifier.my-project.asd
   - package.lisp
-  - src/cool-proj.lisp
+  - src/my-project.lisp
 
 For utility libraries, I make the repository name into the long version.
 Same use pattern of clone and symlink.
 This makes many small libraries easy to store, sort, navigate and recall what they do.
-Its ugly and verbose, but it works.
+Its clunky and verbose, but it works like a charm.
 
 - github.com/metarepl/metarepl.category-specifier.my-project.asd
   - metarepl.category-specifier.my-project.asd
   - package.lisp
-  - src/cool-proj.lisp
+  - src/my-project.lisp
 
 For polished libraries, where user ease is primary,
 the repository name (which becomes the dir name),
@@ -443,20 +443,21 @@ This use pattern only requires cloning into somewhere asdf searches, and discove
 - github.com/metarepl/shelter.asd
   - shelter.asd (which defines system :shelter)
   - package.lisp (which defines package :shelter)
-  - src/cool-proj.lisp
+  - src/shelter.lisp
+
+For libraries with short and polished names,
+optionally use package nicknames to also use the long categorized name for consistency and discoverablity
 
 *** system name
 
 #+begin_src lisp
 
-  (asdf:defsystem "metarepl.category-specifier.cool-proj" ;; must match the asd file name
+  (asdf:defsystem "metarepl.category-specifier.my-project" ;; must match the asd file name
     :depends-on (:other-asdf-system)
     :serial t
-    :components (
-                 (:file "package")
+    :components ((:file "package")
                  (:module "src"
-                  :components (
-                               (:file "cool-proj")))))
+                  :components ((:file "cool-proj")))))
 
 #+end_src
 
@@ -464,9 +465,8 @@ This use pattern only requires cloning into somewhere asdf searches, and discove
 
 #+begin_src lisp
 
-  (defpackage #:cool-proj
-    (:use #:cl
-          #:uiop)
+  (defpackage #:my-project
+    (:use #:cl)
     (:export #:*my-symbol*
              #:my-function))
 
@@ -501,7 +501,7 @@ and really move the furniture around, there are commands where you can do it all
 (unintern 'a-symbol)
 #+end_src
 
-heres a good read on what is going on under the helful gaze of defpackage https://flownet.com/gat/packages.pdf
+heres a good read on what is going on in defpackage  https://flownet.com/gat/packages.pdf
 
 ** manual system loading
 
@@ -517,6 +517,7 @@ interacting with asdf
   ;; get the system itself
   (asdf:find-system :shelter)
   (inspect *) ; check out the details of the system returned in the previous command
+  ;; q RET to leave inspect mode
 
   ;; load system definition
   (asdf:load-asd "str.asd") ;  can use exact path
@@ -539,8 +540,9 @@ I dont recommend it except for quick scripts.
 Using ocicl is better than quicklisp,
 because it make downloads secure,
 but it also makes downloading appear native to asdf commands.
-Then any packages that use asdf for compilation or deployment, gain discovery as well
-When your build system can do deployment and discovery, its pretty slick.
+Then any packages that uses asdf for compilation or deployment, gains online system discovery as well.
+When your build system can do deployment and discovery and compilation and its transitive through the whole system, well, its pretty slick.
+
 
 #+begin_src lisp
   ;; with quicklisp
@@ -591,12 +593,131 @@ none of this is particularly verbose, but it does require a change of details to
 attend to. If something is not working as expected, I check what actions I have
 assumed are accomplished by some explicit command.
 ** Symbol
-&&& define symbol
+
+Symbols are a distinct and fundamental type
+
+Symbols are fundamental to Lisp's property of "code is data, data is code".
+
+A symbol in Common Lisp is a data object with four components:
+1. Name - a string
+2. Value - any Lisp object (when used as a variable)
+3. Function - a function object (when used as a function name)
+4. Property list - an association list for arbitrary properties
+
+Creating symbols
+#+begin_src lisp
+'foo               ; => FOO (symbol)
+(intern "BAR")     ; => BAR (creates or finds symbol)
+(make-symbol "X") ; => #:X (uninterned symbol)
+#+end_src
+
+Symbols serve multiple roles:
+
+ 1. Names and Identifiers
+
+Symbols name variables, functions, and other entities.
+#+begin_src lisp
+  (defvar *count* 0)  ; *COUNT* is a symbol naming a variable
+
+  (defun add (x y)    ; ADD is a symbol naming a function
+    (+ x y))
+#+end_src
+
+ 2. Self-Evaluating
+
+in quoted context the symbol is not evaluated, or rather, it evaluates to itself
+#+begin_src lisp
+'hello  ; => HELLO (the symbol itself, not its value)
+#+end_src
+
+ 3. Interned vs Uninterned
+
+Interned: Registered in a package, accessible by name
+
+Uninterned: Not in any package (printed as #:NAME)
+
+ 4. Symbols as Data
+
+ Used in pattern matching, as keys, and for symbolic computation:
+
+#+begin_src lisp
+(get 'color 'value)           ; property access
+(eq 'yes 'yes)                ; => T (same symbol)
+#+end_src
+
 ** Image
-The image is the program, running in memory.
+
+The image is the program, running in memory, it can be exported and reloaded.
 It is live in that parts of the image can be dynamically modified.
-An image can contain multiple systems, and packages.
+An image can contain multiple systems, and multiple packages.
+
+The image is a snapshot of the entire runtime state of a running Lisp system, including:
+- system configuration - reader settings, package definitions, loaded libraries
+- loaded code - compiled functions, macros, packages
+- runtime state - variable values, data structures, object instances
+
+- Incremental Development: You modify code while the program runs, without restarting.
+  - Changes are compiled and integrated immediately.
+- Persistence: You can save image and restore it later
+- Fast startup: Loading an image is much faster than recompiling code
+- Deployment: Applications are often distributed as executable images
+
+  custom environments with pre loaded tools
+#+begin_src lisp
+
+  ;; Start with base image
+  ;; Load libraries
+  (asdf:load-system :big-system)
+
+  ;; define functions and parameters
+
+  ;; Save an image as a development snapshot
+  (save-lisp-and-die "myapp.core")
+  ;; Start from an image
+  $ sbcl --core myapp.core
+
+#+end_src
+
+ application deployment
+#+begin_src lisp
+
+  ;; Start with base image
+  ;; Load libraries, define functions
+  (defun my-app () ...)
+
+  ;; Test and debug interactively
+  (my-app)
+
+  ;; Fix bugs without restarting
+  (defun my-app () ... fixed version ...)
+
+  ;; Save the working state
+  (save-lisp-and-die "my-app" :executable t)
+
+#+end_src
+
+the exported image is a standalone executable for distribution
+
 ** Incremental and Live
+
+Don't blow up the factory to tighten a single bolt on a conveyor.
+Why recompile an entire program to modify a function?
+Why even stop the program to modify a function?
+
+In common lisp compilation and recompilation of a single function,
+can occur as the rest of the program runs.
+And the running program will use the new function definition.
+This incremental compilation is analogous to tightening a bolt, while the factory runs.
+
+Errors don't unwind the stack, they do stop execution right at the moment it occurs.
+You can then inspect the stack, identify the problem, redefine the function, variable, or entire system.
+Then resume execution using the updated definition.
+
+Inspection of the stack is similar to browsing old internet, it is clickable browsable text.
+I LOVE getting errors, its like having a print statement showing the state of my program
+at every function and variable (all the way down to memory addresses if you want to go that far).
+Then surfing my program to the source, fixing just that bit, and carrying on from there.
+
 * Lisp and REPL Operations
 ** Pathnames
 
