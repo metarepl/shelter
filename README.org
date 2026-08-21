@@ -440,9 +440,9 @@ the asd file name, and its defined system name,
 and the package name should all be the same.
 This use pattern only requires cloning into somewhere asdf searches, and discovery will just work.
 
-- github.com/metarepl/shelter.asd
-  - shelter.asd (which defines system :shelter)
-  - package.lisp (which defines package :shelter)
+- github.com/metarepl/shelter
+  - shelter.asd (which defines a system :shelter)
+  - package.lisp (which defines a package :shelter)
   - src/shelter.lisp
 
 For libraries with short and polished names,
