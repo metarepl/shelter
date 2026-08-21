@@ -241,18 +241,18 @@ Without ocicl and repocicl, asdf does not download.
       :serial t
       :components ((:file "my-project")) ; implicitly a .lisp file
 
-      ;; my-project.lisp
-      (in-package :cl-user)
+    ;; my-project.lisp
+    (in-package :cl-user)
 
-      (defpackage #:my-package
-        (:use :cl)
-        (:export :my-function))
+    (defpackage #:my-package
+      (:use :cl)
+      (:export :my-function))
 
-      (in-package :my-package)
+    (in-package :my-package)
 
-      (defun my-function ()
-        "an exported function"
-        (print "hello world"))
+    (defun my-function ()
+      "an exported function"
+      (print "hello world"))
 
       #+end_src
 
@@ -280,7 +280,7 @@ Without ocicl and repocicl, asdf does not download.
                     :components ((:file "utils")
                                  (:file "my-project")))
                    (:module "test"
-                    :components tests)))
+                    :components ((:file "tests")))))
 
     ;; package.lisp
     (in-package :cl-user)
@@ -720,10 +720,48 @@ Then surfing my program to the source, fixing just that bit, and carrying on fro
 
 ** Differences
 
+Density
+
+Lisp code is very dense, if you are struggling to read something.
+Slow. Down.
+You dont read math as fast as a novel.
+Consider how much is being done and expressed,
+and realize you might be trying to read the equivalent to hundreds of lines of java.
+Then take the time to understand.
+
+Position
+
+A lot of syntax sugar and symbol use is just not there.
+This is a part of the density, position has meaning.
+Meaning is found in the position of an element.
+eg. the first position is the function call .
+the second form in an if is the else clause.
+there are no commas in a list.
+
+On the other hand, position of computation is very flexible, you can put what you need to do where you need to do it.
+If a form evaluates to the right argument, it can be placed there, even if it contains arbitrary complex sub forms.
+This becomes apparent when you need to modify a function for an edge case.
+There ususally appears a precise postion in the code where you can nest some logic to deal with the
+specific cases, without substantially affecting the original.
+
+Flows
+
+Control flows down, values flow up.
+Code can be understood bi-directionaly.
+This counter flow pattern also occurs in systems in biology by the way.
+You might come across code with a section of logic placed below only one variable assignment,
+Understand that this is likely catching an edge case which flows down, through the control, and the selected value flows up to
+the assignment.
+Similarly control enters the function, flows down according to the arguments,
+and various computed values flow up and are combined.
+The final return value should be though of as leaving the top left of the function, not the bottom right.
+
+Independence
+
 many operations we assume are bound together in other languages are independent in common lisp.
-- import is independent of use
-- chdir is independent of *default-directory-defaults*
-- in-package for the code is indpendent of in-package for the REPL
+- packages import is independent of use
+- in-package for the file of code is indpendent of in-package for the REPL
+- (uiop:chdir ...) is independent of the parameter default-directory-defaults
 - &&&
 
 Many granular steps are available and required to precisely specify the system,
