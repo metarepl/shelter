@@ -429,7 +429,7 @@ Same use pattern of clone and symlink.
 This makes many small libraries easy to store, sort, navigate and recall what they do.
 Its clunky and verbose, but it works like a charm.
 
-- github.com/metarepl/metarepl.category-specifier.my-project.asd
+- github.com/metarepl/metarepl.category-specifier.my-project
   - metarepl.category-specifier.my-project.asd
   - package.lisp
   - src/my-project.lisp
@@ -466,6 +466,7 @@ optionally use package nicknames to also use the long categorized name for consi
 #+begin_src lisp
 
   (defpackage #:my-project
+    (:nicknames #:metarepl.category-specifier.myproject")
     (:use #:cl)
     (:export #:*my-symbol*
              #:my-function))
